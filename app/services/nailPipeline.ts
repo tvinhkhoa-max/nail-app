@@ -22,75 +22,75 @@ export async function removeBg(buffer: Buffer) {
 /**
  * STEP 2: flood fill lấy region lớn nhất (ngón tay)
  */
-function getLargestRegion(mask: Uint8Array, width: number, height: number) {
-  const visited = new Uint8Array(mask.length)
-  let bestRegion: number[] = []
+// function getLargestRegion(mask: Uint8Array, width: number, height: number) {
+//   const visited = new Uint8Array(mask.length)
+//   let bestRegion: number[] = []
 
-  function floodFill(start: number) {
-    const stack = [start]
-    const region: number[] = []
+//   function floodFill(start: number) {
+//     const stack = [start]
+//     const region: number[] = []
 
-    while (stack.length) {
-      const i = stack.pop()!
-      if (visited[i] || mask[i] === 0) continue
+//     while (stack.length) {
+//       const i = stack.pop()!
+//       if (visited[i] || mask[i] === 0) continue
 
-      visited[i] = 1
-      region.push(i)
+//       visited[i] = 1
+//       region.push(i)
 
-      const neighbors = [i - 1, i + 1, i - width, i + width]
-      for (const n of neighbors) {
-        if (n >= 0 && n < mask.length) stack.push(n)
-      }
-    }
+//       const neighbors = [i - 1, i + 1, i - width, i + width]
+//       for (const n of neighbors) {
+//         if (n >= 0 && n < mask.length) stack.push(n)
+//       }
+//     }
 
-    return region
-  }
+//     return region
+//   }
 
-  for (let i = 0; i < mask.length; i++) {
-    if (!visited[i] && mask[i] === 255) {
-      const region = floodFill(i)
-      if (region.length > bestRegion.length) {
-        bestRegion = region
-      }
-    }
-  }
+//   for (let i = 0; i < mask.length; i++) {
+//     if (!visited[i] && mask[i] === 255) {
+//       const region = floodFill(i)
+//       if (region.length > bestRegion.length) {
+//         bestRegion = region
+//       }
+//     }
+//   }
 
-  return bestRegion
-}
+//   return bestRegion
+// }
 
 /**
  * STEP 3: detect cuticle line
  */
-function detectCuticleLine(region: number[], width: number, height: number) {
-  const rowWidths: number[] = new Array(height).fill(0)
+// function detectCuticleLine(region: number[], width: number, height: number) {
+//   const rowWidths: number[] = new Array(height).fill(0)
 
-  for (const i of region) {
-    const y = Math.floor(i / width)
-    const x = i % width
+//   for (const i of region) {
+//     const y = Math.floor(i / width)
+//     const x = i % width
 
-    if (!rowWidths[y]) rowWidths[y] = { min: x, max: x } as any
-    else {
-      rowWidths[y].min = Math.min(rowWidths[y].min, x)
-      rowWidths[y].max = Math.max(rowWidths[y].max, x)
-    }
-  }
+//     if (!rowWidths[y]) rowWidths[y] = { min: x, max: x } as any
+//     else {
+//       rowWidths[y].min = Math.min(rowWidths[y].min, x)
+//       rowWidths[y].max = Math.max(rowWidths[y].max, x)
+//     }
+//   }
 
-  let minWidth = Infinity
-  let cuticleY = Math.floor(height * 0.3)
+//   let minWidth = Infinity
+//   let cuticleY = Math.floor(height * 0.3)
 
-  for (let y = Math.floor(height * 0.1); y < Math.floor(height * 0.7); y++) {
-    const row = rowWidths[y]
-    if (!row) continue
+//   for (let y = Math.floor(height * 0.1); y < Math.floor(height * 0.7); y++) {
+//     const row = rowWidths[y]
+//     if (!row) continue
 
-    const w = row.max - row.min
-    if (w > 5 && w < minWidth) {
-      minWidth = w
-      cuticleY = y
-    }
-  }
+//     const w = row.max - row.min
+//     if (w > 5 && w < minWidth) {
+//       minWidth = w
+//       cuticleY = y
+//     }
+//   }
 
-  return cuticleY
-}
+//   return cuticleY
+// }
 
 /**
  * MAIN FUNCTION

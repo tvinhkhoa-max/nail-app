@@ -1,9 +1,9 @@
 import React from 'react'
-import { Head, Link, router, usePage } from '@inertiajs/react'
-import Layout from '#/layouts/Layout.js';
+import { Head, Link, router } from '@inertiajs/react'
+import Layout from '#resource/layouts/Layout.js';
 import { FaEdit, FaEraser } from "react-icons/fa";
 import { RiQuillPenAiLine } from "react-icons/ri";
-import { route, getImageUpload } from '#/helpers/route'
+import { route } from '#resource/helpers/route.js'
 
 interface NailCollection {
   id: string
@@ -24,7 +24,7 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
       router.delete(route('nail-collection.destroy', { id: id }))
     }
   }
-  const { props } = usePage();
+  // const { props } = usePage();
 
   return (
     <>

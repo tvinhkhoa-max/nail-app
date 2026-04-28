@@ -9,5 +9,5 @@
     },
     "ignoreDeprecations": "6.0"
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
+  "include": ["./**/*.ts", "./**/*.tsx", "pages/nails/manage5._tsx_", "pages/nails/manage4._tsx_", "pages/nails/manage3._tsx_", "pages/nails/manage2._tsx_", "pages/nails/manage1._tsx_"],
 }

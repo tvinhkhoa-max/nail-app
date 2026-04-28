@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
-import { Link } from '@inertiajs/react'
 // import Sidebar from '@/components/Sidebar';
-import Sidebar from '#/components/Sidebar.js';
-import { ToastContainer } from '#/components/Toast.js';
-
+import Sidebar from '#resource/components/Sidebar.js';
+import { ToastContainer } from '#resource/components/Toast.js';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 
@@ -20,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* 2. Sidebar Container */}
-      <Sidebar  />
+      <Sidebar children={<></>} />
 
       {/* 3. Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -59,20 +57,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   )
 }
 
-function MenuItem({ href, label, icon, active = false }: any) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className={`flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg transition-all ${
-          active
-            ? 'bg-primary text-white shadow-lg shadow-primary/30'
-            : 'text-body-color dark:text-dark-6 hover:bg-gray-100 dark:hover:bg-white/5'
-        }`}
-      >
-        <span className="text-xl">{icon}</span>
-        {label}
-      </Link>
-    </li>
-  )
-}
+// function MenuItem({ href, label, icon, active = false }: any) {
+//   return (
+//     <li>
+//       <Link
+//         href={href}
+//         className={`flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg transition-all ${
+//           active
+//             ? 'bg-primary text-white shadow-lg shadow-primary/30'
+//             : 'text-body-color dark:text-dark-6 hover:bg-gray-100 dark:hover:bg-white/5'
+//         }`}
+//       >
+//         <span className="text-xl">{icon}</span>
+//         {label}
+//       </Link>
+//     </li>
+//   )
+// }

@@ -3,9 +3,9 @@ import { Head, useForm, router } from '@inertiajs/react'
 import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
-import Layout from '#/layouts/Layout'
-import { FormInput, SearchableSelect2, FormSwitch } from '#/components/Form'
-import { route } from '#/helpers/route'
+import Layout from '#resource/layouts/Layout.js'
+import { FormInput, SearchableSelect2, FormSwitch } from '#resource/components/Form.js'
+import { route } from '#resource/helpers/route.js'
 
 interface NailCate {
   id: string
@@ -41,10 +41,10 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
   const [imgSrc, setImgSrc] = useState(collection?.img || '')
   const imgRef = useRef<HTMLImageElement>(null)
   const [crop, setCrop] = useState<Crop>()
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>()
   const [scale, setScale] = useState(1)
   const [rotate, setRotate] = useState(0)
-  const [processAi, setProcessAi] = useState(true)
+  const [processAi, setProcessAi] = useState(1)
   const { data, setData, processing, errors } = useForm({
     id: nail?.id || null,
     name: nail?.name || '',
@@ -55,7 +55,7 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
     // Metadata để backend biết nguồn gốc
     source_type: existingImage ? 'library' : 'upload',
     original_url: existingImage || '',
-    status: true
+    status: 1
   })
   const optionCates = nailCates
     .map(item => ({
@@ -88,9 +88,9 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
     setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 50 }, 1, width, height), width, height))
   }
 
-  function handleProcessAI(e: React.ChangeEvent<HTMLInputElement>) {
+  // function handleProcessAI(e: React.ChangeEvent<HTMLInputElement>) {
 
-  }
+  // }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,15 +109,15 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
 
       const pixelRatio = window.devicePixelRatio
       // 2. Thiết lập kích thước canvas bằng đúng vùng chọn (đã nhân scale)
-      canvas.width = Math.floor(completedCrop.width * scaleX * pixelRatio)
-      canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio)
+      canvas.width = Math.floor(completedCrop!.width * scaleX * pixelRatio)
+      canvas.height = Math.floor(completedCrop!.height * scaleY * pixelRatio)
 
       ctx.scale(pixelRatio, pixelRatio)
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = 'high'
 
-      const cropX = completedCrop.x * scaleX
-      const cropY = completedCrop.y * scaleY
+      const cropX = completedCrop!.x * scaleX
+      const cropY = completedCrop!.y * scaleY
       const centerX = image.naturalWidth / 2
       const centerY = image.naturalHeight / 2
 
@@ -137,8 +137,8 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
       ctx.translate(-centerX, -centerY)
 
       // 6. Vẽ ảnh: Điểm mấu chốt là phải trừ đi tọa độ tâm của vùng crop trên ảnh gốc
-      const drawX = -(completedCrop.x * scaleX + (completedCrop.width * scaleX) / 2)
-      const drawY = -(completedCrop.y * scaleY + (completedCrop.height * scaleY) / 2)
+      // const drawX = -(completedCrop.x * scaleX + (completedCrop.width * scaleX) / 2)
+      // const drawY = -(completedCrop.y * scaleY + (completedCrop.height * scaleY) / 2)
 
       ctx.drawImage(
         image,
@@ -244,7 +244,7 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
                 label="Hiển thị Kiểu Nail"
                 description="Hiển thị biểu tượng 🔥"
                 enabled={data.status}
-                onChange={(val: boolean) => setData('status', val)}
+                onChange={(val: number) => setData('status', val)}
               />
             </div>
 
@@ -254,7 +254,7 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
                 label="Sử dụng AI để tách móng"
                 description=""
                 enabled={processAi}
-                onChange={(val: boolean) => setProcessAi(val)}
+                onChange={(val: number) => setProcessAi(val)}
               />
             </div>
 

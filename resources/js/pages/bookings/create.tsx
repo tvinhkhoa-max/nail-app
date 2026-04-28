@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import Layout from '#/layouts/Layout'
-import { FormInput } from '#/components/FormInput'
+import Layout from '#resource/layouts/Layout.js'
+import { FormInput } from '#resource/components/FormInput.js'
 
 export default function CreateBooking() {
   // Sử dụng Inertia Form Helper để quản lý state và lỗi
@@ -41,7 +41,7 @@ export default function CreateBooking() {
                   label="Tên khách hàng"
                   placeholder="Nguyễn Văn A"
                   value={data.customer_name}
-                  onChange={e => setData('customer_name', e.target.value)}
+                  onChange={(e: any) => setData('customer_name', e.target.value)}
                   error={errors.customer_name}
                 />
               </div>
@@ -52,7 +52,7 @@ export default function CreateBooking() {
                   label="Số điện thoại"
                   placeholder="0901234xxx"
                   value={data.phone}
-                  onChange={e => setData('phone', e.target.value)}
+                  onChange={(e: any) => setData('phone', e.target.value)}
                   error={errors.phone}
                 />
               </div>
@@ -87,7 +87,7 @@ export default function CreateBooking() {
                   label="Ngày và giờ hẹn"
                   type="datetime-local"
                   value={data.booking_date}
-                  onChange={e => setData('booking_date', e.target.value)}
+                  onChange={(e: any) => setData('booking_date', e.target.value)}
                   error={errors.booking_date}
                 />
               </div>

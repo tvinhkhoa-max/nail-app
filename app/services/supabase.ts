@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import imageCompression from 'browser-image-compression'
 import { randomUUID } from 'crypto'
 
 const supabaseUrl = process.env.SUPABASE_URL!
@@ -39,9 +38,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 //   }
 // }
 export const removeImageStorage = async (pathFile: String) => {
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
   .from('images') // tên bucket
-  .remove(['collections/abc.jpg']) // path đầy đủ
+  .remove([pathFile.toString()]) // path đầy đủ
 
   if (error) throw error;
 }
@@ -60,7 +59,7 @@ export const uploadImage = async (
 
   console.log('UPLOAD PATH:', filePath)
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('images')
     .upload(filePath, buffer,  {
       contentType: `image/${type}`

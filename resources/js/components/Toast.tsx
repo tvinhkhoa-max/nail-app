@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePage, router } from '@inertiajs/react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -7,6 +7,22 @@ interface ToastProps {
   type: ToastType;
   message: string;
   onClose: (id: string) => void;
+}
+// 1. Định nghĩa cấu trúc Flash
+interface FlashData {
+  success?: string | string[];
+  error?: string | string[];
+  warning?: string | string[];
+  info?: string | string[];
+  flash_id?: number;
+  [key: string]: any;
+}
+
+// 2. Định nghĩa cấu trúc chung cho Page Props của Inertia
+interface SharedProps {
+  flash: FlashData;
+  // Bạn có thể thêm auth, app_name... vào đây nếu có dùng chung
+  [key: string]: any; 
 }
 
 export const Toast = ({ id, type, message, onClose }: ToastProps) => {
@@ -53,7 +69,7 @@ export const Toast = ({ id, type, message, onClose }: ToastProps) => {
 
 export const ToastContainer = () => {
   const [toasts, setToasts] = useState<{ id: string; type: ToastType; message: string }[]>([]);
-  const { props } = usePage();
+  const { props } = usePage<SharedProps>();
 
   // 1. Hàm thêm Toast (Tạo ID ngẫu nhiên để không bị trùng lặp)
   const addToast = useCallback((type: ToastType, message: string) => {
@@ -99,7 +115,7 @@ export const ToastContainer = () => {
         }
       }
     });
-  }, [props.flash, props.flash?.flash_id, addToast]);
+  }, [props.flash, props.flash.flash_id, addToast]);
 
   // --- LUỒNG 2: XỬ LÝ LỖI TRỰC TIẾP (Dùng cho response.status(400/500).send) ---
   useEffect(() => {

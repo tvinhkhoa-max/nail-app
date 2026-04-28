@@ -34,22 +34,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      {/* <div className="flex flex-col flex-1 w-full overflow-y-auto">
-        <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-dark-2 border-b border-stroke dark:border-dark-3 lg:justify-end">
-          <button
-            onClick={() => setOpen(!open)}
-            className="block lg:hidden text-dark dark:text-white"
-          >
-            ☰
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium dark:text-white">Admin QA</span>
-            <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-          </div>
-        </header>
-
-        <main className="p-6">{children}</main> 
-      </div>*/}
+      <div className="flex flex-col flex-1 w-full overflow-y-auto">
+        <main className="w-full">{children}</main> 
+      </div>
     </div>
   )
 }

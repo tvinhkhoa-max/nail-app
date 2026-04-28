@@ -1,18 +1,18 @@
 // app/controllers/nail_styles_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
+// import { inject } from '@adonisjs/core'
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
-import NailService from '#services/nail_service'
+// import NailService from '#services/nail_service'
 import path from 'path'
 import fs from 'fs/promises'
 import { existsSync } from 'node:fs'
 import { uploadImage, removeImageStorage } from '#services/supabase'
-import { getPathImageUpload } from '#helpers/index'
+// import { getPathImageUpload } from '#helpers/index'
 
-@inject()
+// @inject()
 export default class NailCollectionsController {
-  constructor(protected nailService: NailService) {}
+  // constructor(protected nailService: NailService) {}
 
   async index({ inertia }: HttpContext) {
     // Inertia sẽ tự động tìm trong resources/js/pages/

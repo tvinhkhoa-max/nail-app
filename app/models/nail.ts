@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, computed, beforeCreate, belongsTo  } from '@adonisjs/lucid/orm' // , beforeSave
+import { BaseModel, column, computed, beforeCreate  } from '@adonisjs/lucid/orm' // , beforeSave
 // import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { v4 as uuid } from 'uuid'
 import { changeStatus } from '#helpers/index'

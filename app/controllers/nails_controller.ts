@@ -1,22 +1,21 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Application from '@adonisjs/core/services/app'
-import { inject } from '@adonisjs/core'
+// import { inject } from '@adonisjs/core'
 import { cuid } from '@adonisjs/core/helpers'
-import NailService from '#services/nail_service'
+// import NailService from '#services/nail_service'
 import { extractNailAll, removeBg } from '#services/nailPipeline'
 import fs from 'fs/promises'
 import { existsSync } from 'node:fs'
 import slugify from 'slugify'
 import { getPathImageUpload } from '#helpers/index'
-import { uploadImage, removeImageStorage } from '#services/supabase'
+import { uploadImage } from '#services/supabase'
 
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
 import Nail from '#models/nail'
 
-@inject()
+// @inject()
 export default class NailsController {
-  constructor(protected nailService: NailService) {}
+  // constructor(protected nailService: NailService) {}
 
   /**
    * Hiển thị danh sách (Index)
@@ -91,38 +90,6 @@ export default class NailsController {
     return inertia.render('nails/manage', { nailCates: nailCates, nailCollections, collection, nail, pathUpload: getPathImageUpload() })
   }
 
-  async store3({ request, response, session }: HttpContext) {
-    const croppedImage = request.file('nail_image', {
-      size: '2mb',
-      extnames: ['png'],
-    })
-
-    if (!croppedImage) {
-      session.flash('error', 'Không tìm thấy ảnh đã crop.')
-      return response.redirect().back()
-    }
-
-    // 2. Kiểm tra nguồn ảnh gốc
-    const sourceType = request.input('source_type')
-    let sourcePath = ''
-
-    if (sourceType === 'upload') {
-      // Trường hợp A: Xử lý file gốc upload mới (nail_image_raw)
-      const rawImage = request.file('nail_image_raw')
-      if (rawImage) {
-        // Lưu ảnh gốc vào disk
-        const fileName = `${cuid()}_raw.${rawImage.extname}`
-        await rawImage.move(Application.tmpPath('uploads'), { name: fileName })
-        sourcePath = `uploads/${fileName}`
-      }
-    } else {
-      // Trường hợp B: Lấy URL ảnh nguồn đã có sẵn (source_image_url)
-      sourcePath = request.input('source_image_url')
-    }
-
-
-  }
-
   async store({ request, response, session }: HttpContext) {
     // 1. Luôn nhận file đã crop (nail_image)
     // console.log('All Files:', request.allFiles())
@@ -167,7 +134,7 @@ export default class NailsController {
     // const croppedFileName = `${cuid()}_cropped.png`
     // await croppedImage.move(Application.disk('s3').tmpPath('nails'), { name: croppedFileName })
 
-    const fileName = `${Date.now()}.${croppedImage?.extname}`
+    // const fileName = `${Date.now()}.${croppedImage?.extname}`
     // const filePath = path.join('tmp', fileName)
     const nailName = payload['name'] ? slugify(payload['name'].toLowerCase().replace(/\s+/g, '-'), {
       lower: true,
@@ -276,7 +243,7 @@ export default class NailsController {
    */
   async store1({ request, response, session }: HttpContext) {
     // 1. Lấy dữ liệu từ form
-    const data = request.all()
+    // const data = request.all()
     
     // 2. Logic lưu database (Ví dụ: await Booking.create(data))
     // console.log('Dữ liệu nhận được:', data)

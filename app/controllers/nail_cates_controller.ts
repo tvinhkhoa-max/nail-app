@@ -72,11 +72,13 @@ export default class NailCatesController {
     }
   }
 
-  async delete({ request, response }: HttpContext) {
-
+  async delete({ response }: HttpContext) {
+    return response.status(200).ok( {
+      
+    })
   }
 
-  async list({ request, response }: HttpContext) {
+  async list({ response }: HttpContext) {
     try {
       const categories = await NailCate
         .query()

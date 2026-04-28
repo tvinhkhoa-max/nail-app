@@ -38,9 +38,9 @@ export default class BookingsController {
     return response.redirect().toPath('/admin/bookings')
   }
 
-  async reserve({ request, response }: HttpContext) {
+  async reserve({ request }: HttpContext) {
     const payload = request.all()
-    const res = await this.sendMessageTelegram(payload)
+    return await this.sendMessageTelegram(payload);
     // const GROUP_ID = "120363408407193729@g.us";
     // const message = `
     //   🌟 *CÓ LỊCH HẸN MỚI - NAILSXANH* 🌟

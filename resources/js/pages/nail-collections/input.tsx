@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import Layout from '#/layouts/Layout.js'
+import Layout from '#resource/layouts/Layout.js'
 import { 
   SearchableSelectForm, 
   SearchableSelect2, 
   FormSwitch, 
   FormInput, 
-  FormTextarea } from '#/components/Form.js'
+  FormTextarea } from '#resource/components/Form.js'
 
 // Định nghĩa các tập dữ liệu cho Combobox
 const STYLES = ["Nhẹ nhàng", "Sang chảnh", "Cute", "Cá tính", "Cổ điển", "Phá cách"];
@@ -56,7 +56,7 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
     occasion: collection?.occasion || 'Đi làm',
     img: collection?.img || null as File | null,
     desc: collection?.desc || '',
-    status: collection ? (Boolean(collection.status)) : true,
+    status: collection ? (Number(collection.status)) : 0,
   })
   const optionCates = nailCates
     .filter(item => item.status === 1) // Chỉ lấy các danh mục đang hoạt động
@@ -172,7 +172,7 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
                 label="Hiển thị Bộ sưu tập Nail"
                 description="Hiển thị biểu tượng 🔥 và đưa lên đầu trang chủ App"
                 enabled={data.status}
-                onChange={(val: boolean) => setData('status', val)}
+                onChange={(val: number) => setData('status', val)}
               />
             </div>
 

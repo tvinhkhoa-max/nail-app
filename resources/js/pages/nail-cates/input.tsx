@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import Layout from '#/layouts/Layout.js'
-import { FormInput, FormSwitch, FormTextarea } from '#/components/Form.js'
+import Layout from '#resource/layouts/Layout.js'
+import { FormInput, FormSwitch, FormTextarea } from '#resource/components/Form.js'
 
 interface NailCategory {
   id?: string
@@ -24,10 +24,10 @@ export default function InputNailCate({ category }: Props) {
   const { data, setData, post, processing, errors } = useForm({
     id: category?.id || '', // Hidden
     name: category?.name ||'',
-    hot: category?.hot || Number(false),
-    price: category?.price || null,
+    hot: category?.hot || Number(0),
+    price: category?.price || '',
     desc: category?.desc || '',
-    status: category?.status || Number(false)
+    status: category?.status || Number(0)
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -95,7 +95,7 @@ export default function InputNailCate({ category }: Props) {
                   label="Loại nổi bật"
                   description="Hiển thị trên trang chủ App"
                   enabled={data.hot}
-                  onChange={(val: boolean) => setData('hot', val)}
+                  onChange={(val: number) => setData('hot', val)}
                 />
               </div>
               <div className="w-full px-4 md:w-1/2">

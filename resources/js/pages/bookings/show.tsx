@@ -1,5 +1,4 @@
 import { useState } from "react";
-// import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   DndContext,
   useSensor,
@@ -10,7 +9,7 @@ import {
   useDroppable,
   DragOverlay
 } from "@dnd-kit/core"
-import Layout from '#/layouts/Layout.js';
+import Layout from '#resource/layouts/Layout.js';
 
 const hours = Array.from({ length: 10 }, (_, i) => i + 9);
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -128,8 +127,16 @@ function BookingModal({ booking, onClose, onSave, onDelete }: any) {
   );
 }
 
+interface BookingProp {
+  id: string,
+  day: number,
+  hour: number,
+  name: string,
+  status: string
+}
+
 export default function BookingCalendarTailGrids() {
-  const [bookings, setBookings] = useState([
+  const [bookings, setBookings] = useState<BookingProp[]>([
     { id: "1", day: 1, hour: 10, name: "Anna", status: "confirmed" },
     { id: "2", day: 3, hour: 14, name: "Linh", status: "pending" },
   ]);
@@ -149,7 +156,7 @@ export default function BookingCalendarTailGrids() {
     })
   )
   const [selected, setSelected] = useState(null);
-  const [activeBooking, setActiveBooking] = useState(null)
+  const [activeBooking, setActiveBooking] = useState<BookingProp | null>(null)
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -253,7 +260,7 @@ export default function BookingCalendarTailGrids() {
             <DragOverlay>
               {activeBooking ? (
                 <div className="bg-green-500 text-white px-2 py-1 rounded-lg shadow">
-                  {activeBooking.name}
+                  {activeBooking?.name}
                 </div>
               ) : null}
             </DragOverlay>

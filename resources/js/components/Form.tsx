@@ -23,14 +23,6 @@ interface FormRadioGroupProps {
   inline?: boolean;
 }
 
-interface FormSwitchProps {
-  label: string;
-  enabled: boolean;
-  onChange: (enabled: boolean) => void;
-  description?: string;
-  disabled?: boolean;
-}
-
 interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string
   error?: string
@@ -92,6 +84,13 @@ export const FormRadioGroup: React.FC<FormRadioGroupProps> = ({ label, options, 
   );
 };
 
+interface FormSwitchProps {
+  label: string;
+  enabled: number;
+  onChange: (enabled: number) => void;
+  description?: string;
+  disabled?: boolean;
+}
 export const FormSwitch: React.FC<FormSwitchProps> = ({ 
   label, 
   enabled, 
@@ -112,7 +111,7 @@ export const FormSwitch: React.FC<FormSwitchProps> = ({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => onChange(!enabled)}
+        onClick={() => onChange(enabled === 1 ? 0 : 1)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
           enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-dark-4'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
