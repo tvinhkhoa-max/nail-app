@@ -3,9 +3,9 @@ import { Head, useForm, router } from '@inertiajs/react'
 import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
-import Layout from '#resource/layouts/Layout.js'
-import { FormInput, SearchableSelect2, FormSwitch } from '#resource/components/Form.js'
-import { route } from '#resource/helpers/route.js'
+import Layout from '#resource/layouts/Layout'
+import { FormInput, SearchableSelect2, FormSwitch } from '#resource/components/Form'
+import { route } from '#resource/helpers/route'
 
 interface NailCate {
   id: string

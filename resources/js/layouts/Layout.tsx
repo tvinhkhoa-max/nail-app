@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 // import Sidebar from '@/components/Sidebar';
-import Sidebar from '#resource/components/Sidebar.js';
-import { ToastContainer } from '#resource/components/Toast.js';
+import Sidebar from '#resource/components/Sidebar';
+import { ToastContainer } from '#resource/components/Toast';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 

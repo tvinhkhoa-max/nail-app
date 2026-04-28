@@ -1,8 +1,8 @@
 import React from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { FaEdit, FaEraser } from "react-icons/fa";
-import Layout from '#resource/layouts/Layout.js';
-import { route } from '#resource/helpers/route.js'
+import Layout from '#resource/layouts/Layout';
+import { route } from '#resource/helpers/route'
 
 interface Nails {
   id: string

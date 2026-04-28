@@ -1,6 +1,6 @@
 import React from 'react'
 import { Head } from '@inertiajs/react'
-import Layout from '#resource/layouts/Layout.js';
+import Layout from '#resource/layouts/Layout';
 
 const Home = () => {
   return (

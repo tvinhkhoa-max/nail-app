@@ -9,7 +9,7 @@ import {
   useDroppable,
   DragOverlay
 } from "@dnd-kit/core"
-import Layout from '#resource/layouts/Layout.js';
+import Layout from '#resource/layouts/Layout';
 
 const hours = Array.from({ length: 10 }, (_, i) => i + 9);
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

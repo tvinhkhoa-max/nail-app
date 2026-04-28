@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import Layout from '#resource/layouts/Layout.js'
-import { FormInput } from '#resource/components/FormInput.js'
+import Layout from '#resource/layouts/Layout'
+import { FormInput } from '#resource/components/FormInput'
 
 export default function CreateBooking() {
   // Sử dụng Inertia Form Helper để quản lý state và lỗi

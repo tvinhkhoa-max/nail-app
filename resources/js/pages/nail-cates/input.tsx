@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import Layout from '#resource/layouts/Layout.js'
-import { FormInput, FormSwitch, FormTextarea } from '#resource/components/Form.js'
+import Layout from '#resource/layouts/Layout'
+import { FormInput, FormSwitch, FormTextarea } from '#resource/components/Form'
 
 interface NailCategory {
   id?: string

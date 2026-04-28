@@ -1,9 +1,9 @@
 import React from 'react'
 import { Head, Link, router } from '@inertiajs/react'
-import Layout from '#resource/layouts/Layout.js';
 import { FaEdit, FaEraser } from "react-icons/fa";
 import { RiQuillPenAiLine } from "react-icons/ri";
-import { route } from '#resource/helpers/route.js'
+import Layout from '#resource/layouts/Layout';
+import { route } from '#resource/helpers/route';
 
 interface NailCollection {
   id: string

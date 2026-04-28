@@ -1,6 +1,6 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
-import Layout from '#resource/layouts/Layout.js';
+import Layout from '#resource/layouts/Layout';
 
 interface Booking {
   id: number
