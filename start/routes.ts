@@ -80,5 +80,9 @@ router.group(() => {
 
   }).prefix('/nails')
 
+  router.get('health-check', async () => {
+    return { ok: true, time: new Date().toISOString() }
+  });
+
 }).prefix('/api/v1')
 
