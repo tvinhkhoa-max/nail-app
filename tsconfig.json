@@ -1,0 +1,26 @@
+{
+  "extends": "@adonisjs/tsconfig/tsconfig.app.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "ESNext",
+    "module": "ESNext",
+    "rootDir": "./",
+    "outDir": "./build",
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "types": [
+      "@adonisjs/core",
+      "@adonisjs/lucid",
+      "@adonisjs/inertia",
+      "@types/luxon",
+      "vite/client"
+    ]
+  },
+  "exclude": ["./inertia/**/*", "node_modules", "build"]
+}
