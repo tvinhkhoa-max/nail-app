@@ -28,7 +28,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Định nghĩa alias để Vite hiểu dấu #
-      '#resource': fileURLToPath(new URL('./resources', import.meta.url)),
+      '#resource': fileURLToPath(new URL('./resources/js', import.meta.url)),
     },
   },
 })
