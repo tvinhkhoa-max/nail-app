@@ -3,12 +3,11 @@ import type { HttpContext } from '@adonisjs/core/http'
 // import { inject } from '@adonisjs/core'
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
-// import NailService from '#services/nail_service'
 import path from 'path'
 import fs from 'fs/promises'
 import { existsSync } from 'node:fs'
 import { uploadImage, removeImageStorage } from '#services/supabase'
-// import { getPathImageUpload } from '#helpers/index'
+import { validate as uuidValidate } from "uuid";
 
 // @inject()
 export default class NailCollectionsController {
@@ -221,14 +220,19 @@ export default class NailCollectionsController {
   }
 
   async search({ request, response }: HttpContext) {
-    const cateId = request.input('category', null)
+    const keyword = request.input('category', null)
 
     try {
-      const result = await NailCollection
+      const query = NailCollection
         .query()
         .join('nail_cates', 'nail_cates.id', '=', 'nail_collections.cate')
-        .where('nail_cates.id', cateId)
-        .orWhere('nail_cates.tag', cateId)
+
+        if (uuidValidate(keyword))
+          query.where('nail_cates.id', keyword)
+        else
+          query.where('nail_cates.tag', keyword)
+
+      const result = await query.select('nail_collections.*')
 
       response.status(201).send({
         data: result
