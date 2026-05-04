@@ -27,7 +27,14 @@ const dbConfig = defineConfig({
         user: env.get('DB_POSTGRE_USER', '') as string,
         password: env.get('DB_POSTGRE_PASSWORD', 'C0py@right#8487') as string,
         database: env.get('DB_POSTGRE_NAME', 'lucid') as string,
+        // ssl: { rejectUnauthorized: true },
       },
+      pool: {
+        min: 0,
+        max: 10, // Tăng lên 20 hoặc 50 tùy cấu hình server
+        idleTimeoutMillis: 30000,
+        acquireTimeoutMillis: 60000, // Tăng thời gian chờ đợi để mượn kết nối
+      }
     },
   },
 })

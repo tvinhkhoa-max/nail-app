@@ -37,7 +37,7 @@ export default function BookingIndex({ nailcate }: { nailcate: NailCate[] }) {
         </div>
         
         <Link
-          href="/admin/nails/cates/create"
+          href={route('nail-cate.create')}
           className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center text-base font-medium text-white hover:bg-opacity-90"
         >
           + Thêm loại mới
@@ -78,7 +78,7 @@ export default function BookingIndex({ nailcate }: { nailcate: NailCate[] }) {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex justify-end">
-                        <Link href="/admin/nails/cates/edit" data={{"id": item.id}} alt="Sửa" >
+                        <Link href={route('nail-cate.edit', { id: item.id })} alt="Sửa">
                           <FaEdit className="mr-2 ml-auto text-xl" title="Sửa" color="green" />
                         </Link>
 

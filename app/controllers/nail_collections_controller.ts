@@ -1,26 +1,31 @@
 // app/controllers/nail_styles_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-// import { inject } from '@adonisjs/core'
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
 import path from 'path'
 import fs from 'fs/promises'
 import { existsSync } from 'node:fs'
 import { uploadImage, removeImageStorage } from '#services/supabase'
-import { validate as uuidValidate } from "uuid";
+import { validate as uuidValidate } from 'uuid';
+import sharp from 'sharp';
+import db from '@adonisjs/lucid/services/db'
+import { inject } from '@adonisjs/core'
 
-// @inject()
+@inject()
 export default class NailCollectionsController {
-  // constructor(protected nailService: NailService) {}
+  // constructor(
+  //   protected cateModel: typeof NailCate,
+  //   protected collectionModel: typeof NailCollection,
+  // ) {}
 
   async index({ inertia }: HttpContext) {
-    // Inertia sẽ tự động tìm trong resources/js/pages/
-    // const nailcollections = await NailCollection.all() || [];
 
     const nailcollections = await NailCollection
       .query()
-      .leftJoin('nail_cates', 'nail_collections.cate', '=', 'nail_cates.id')
+      .join('nail_cates', 'nail_collections.cate', '=', 'nail_cates.id')
+      .orderBy('nail_collections.updated_at', 'desc')
       .select('nail_collections.*', 'nail_cates.name as cate_name')
+      .exec();
 
     nailcollections.map(item => ({
       ...item,
@@ -28,7 +33,7 @@ export default class NailCollectionsController {
     }))
 
     const config = {
-      URL_STATIC_UPLOAD: (process.env?.NODE_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
+      URL_STATIC_UPLOAD: (process.env?.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
     }
 
     return inertia.render('nail-collections/index', { nailCollections: nailcollections, config })
@@ -49,20 +54,17 @@ export default class NailCollectionsController {
       nailCollection = await NailCollection.findBy('id', collectionId)
     }
 
-    return inertia.render('nail-collections/input', { nailCates, collection: nailCollection })
+    const config = {
+      URL_STATIC_UPLOAD: (process.env?.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
+    }
+
+    return inertia.render('nail-collections/input', { nailCates, collection: nailCollection, config })
   }
   
   async store({ request, response, session }: HttpContext) {
     const errors = []
     let data = {}
-    // const imageFile = request.file('nail_image', {
-    //   size: '5mb',
-    //   extnames: ['jpg', 'png', 'jpeg'],
-    // })
-
-    // if (!imageFile || !imageFile.isValid) {
-    //   return response.badRequest('File không hợp lệ')
-    // }
+    const trx = await db.transaction()
     
     // 1. Lấy dữ liệu từ form
     const input = request.all()
@@ -90,22 +92,34 @@ export default class NailCollectionsController {
       } else
         data = input
 
-      if (!image?.tmpPath) {
-        errors.push('Không tìm thấy ảnh đã crop')
-
-        throw new Error('tmpPath is undefined')
-      }
-
       let pathImageUpload: string
 
-      if (image) {
-        if (!process.env.NODE_ENV || process.env.NODE_ENV != 'development') {
-          let buffer: Buffer | null = await fs.readFile(image.tmpPath);
-          const uploadInfo = await uploadImage(buffer, 'collections');
+      if (image && image.tmpPath) {
+        const watermarkPath = path.join(
+          process.cwd(),
+          'public/cdn/logo_nailsxanh.png'
+        )
+        if (!process.env.APP_ENV || process.env.APP_ENV != 'development') {
+          let buffer: Buffer | null = await fs.readFile(image?.tmpPath);
+          const watermark = await sharp(watermarkPath)
+            .resize({ width: 180 })
+            .png()
+            .toBuffer()
+
+          let imageBuff: any = await sharp(buffer)
+            .composite([{
+              input: watermark,
+              gravity: 'southeast',
+              blend: 'over',
+            }])
+            .webp({ quality: 100 })
+            .toBuffer() || null;
+
+          const uploadInfo = await uploadImage(imageBuff, 'collections');
 
           pathImageUpload = uploadInfo.path;
-          buffer = null
-          console.log(uploadInfo)
+          buffer = null; imageBuff = null;
+
         } else {
 
           const fileName = `${crypto.randomUUID()}.${image?.extname}`
@@ -122,9 +136,11 @@ export default class NailCollectionsController {
       }
 
       // Lưu vào DB 
-      const result = await NailCollection.updateOrCreate({id: input.id}, data )
+      const result = await NailCollection.updateOrCreate({id: input.id}, data, { client: trx } )
 
       session.flash('success', 'Dữ liệu lưu thành công!')
+
+      await trx.commit();
 
       // 3. Thông báo và điều hướng
       if (!input.id) {
@@ -134,6 +150,8 @@ export default class NailCollectionsController {
       return response.redirect().toRoute('nail-collection.list', { id: input.id })
 
     } catch (error) {
+      await trx.rollback();
+
       console.log(error)
       errors.push('Hệ thống không thể thao tác, vui lòng liên hệ với Admin quản trị!')
 
@@ -153,15 +171,23 @@ export default class NailCollectionsController {
     // removeImageStorage
     const params = request.only(['id']);
     const errors: any = []
+    const trx = await db.transaction()
 
     try {
-      const collection = await NailCollection.findBy('id', params['id'])
+      const collection = await NailCollection.findBy('id', params['id'], { client: trx })
 
-      if (!collection) errors.push('Không tìm thấy kiểu móng')
+      if (!collection) {
+        await trx.rollback()
+        errors.push('Không tìm thấy kiểu móng')
+
+        return response.redirect().back()
+      }
       else {
         const imgPath = `./${collection.img}`;
 
-        await collection.delete();
+        await collection?.useTransaction(trx).delete();
+
+        await trx.commit()
 
         if (!process.env.NODE_ENV || process.env.NODE_ENV != 'development') {
           await removeImageStorage(collection.img)
@@ -184,6 +210,8 @@ export default class NailCollectionsController {
       return response.redirect().toRoute('nail-collection.list')
 
     } catch (error) {
+      await trx.rollback()
+
       errors.push('Hệ thống không thể thao tác, vui lòng liên hệ với Admin quản trị!')
 
       // Gửi nguyên mảng lỗi vào session
@@ -195,19 +223,30 @@ export default class NailCollectionsController {
   }
 
   async list({ request, response }: HttpContext) {
-    const params = request.params();
+    const keyword = request.input('q', null)
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 12)
+    const hot = request.input('hot', 12)
 
     try {
-      const collections = await NailCollection.query()
+      const query = NailCollection.query()
         .where('nail_collections.status', 1)
-        .if(params['q'], (query) => {
-          query.leftJoin('nail_cates', 'nail_cates.id', '=', 'nail_collections.cate')
-          query.where('nail_cates.id', params['q'])
-          query.orWhere('nail_cates.tag', params['q'])
+        .if(keyword, (query) => {
+          query.join('nail_cates', 'nail_cates.id', '=', 'nail_collections.cate')
+          if (uuidValidate(keyword))
+            query.where('nail_cates.id', keyword)
+          else
+            query.where('nail_cates.tag', keyword)
+        })
+        .if(hot && hot === 'true', (query) => {
+          query.whereNotNull('nail_collections.hot').where('nail_collections.hot', true)
         })
         // .orderBy('nail_collections.createdAt')
-        .exec() || [];
 
+      query.paginate(page, limit)
+      const collections = await query
+                                  .select('nail_collections.*')
+                                  .exec() || [];
       response.status(201).send({
         data: collections
       });
@@ -221,18 +260,25 @@ export default class NailCollectionsController {
 
   async search({ request, response }: HttpContext) {
     const keyword = request.input('category', null)
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 12)
 
     try {
       const query = NailCollection
         .query()
         .join('nail_cates', 'nail_cates.id', '=', 'nail_collections.cate')
+        .where('nail_collections.status', 1)
 
         if (uuidValidate(keyword))
           query.where('nail_cates.id', keyword)
         else
           query.where('nail_cates.tag', keyword)
 
-      const result = await query.select('nail_collections.*')
+      query.paginate(page, limit)
+
+      const result = await query
+        .select('nail_collections.*')
+        .exec() || []
 
       response.status(201).send({
         data: result

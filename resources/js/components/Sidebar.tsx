@@ -28,6 +28,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               <SidebarItem href="/admin/nails/cates" label="Loại Nail" icon="👩‍🎨" />
               <SidebarItem href="/admin/nails/collections" label="Bộ sưu tập Nail" icon="👩‍🎨" />
               <SidebarItem href="/admin/nails" label="Kiểu Nail" icon="👩‍🎨" />
+              <SidebarItem href="/admin/news" label="Bản tin" icon="👩‍🎨" />
             </ul>
           </nav>
         </div>

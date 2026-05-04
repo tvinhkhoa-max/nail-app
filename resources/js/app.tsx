@@ -1,7 +1,11 @@
 import '../css/app.css'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createInertiaApp } from '@inertiajs/react'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { MantineProvider } from '@mantine/core'
+import '@mantine/core/styles.css'
+import '@mantine/tiptap/styles.css'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
 
@@ -44,7 +48,13 @@ const setupApp = () => {
       }
 
       if (el) {
-        createRoot(el).render(<App {...props} />)
+        createRoot(el).render(
+          <React.StrictMode>
+            <MantineProvider>
+              <App {...props} />
+            </MantineProvider>
+          </React.StrictMode>
+        )
       } else {
         console.error("Lỗi: Không tìm thấy thẻ #app")
       }

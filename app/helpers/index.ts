@@ -12,7 +12,7 @@ export const getImageUpload = (path: string | null) => {
   if (path.startsWith('http')) return path;
 
   // const baseUrl = process.env.SUPABASE_URL_STATIC_IMAGE
-  const baseUrl = (process.env.NODE_ENV && process.env.NODE_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD)
+  const baseUrl = (process.env.APP_ENV && process.env.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD)
 
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
 
@@ -21,6 +21,6 @@ export const getImageUpload = (path: string | null) => {
 
 export const getPathImageUpload = () => {
 
-  return (process.env.NODE_ENV && process.env.NODE_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD);
+  return (process.env.APP_ENV && process.env.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD);
 
 }

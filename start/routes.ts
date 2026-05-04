@@ -13,6 +13,8 @@ import BookingsController from '#controllers/booking_controller'
 import NailCatesController from '#controllers/nail_cates_controller'
 import NailsController from '#controllers/nails_controller'
 import NailCollectionsController from '#controllers/nail_collections_controller'
+import ServiceController from '#controllers/service_controller'
+import NewsController from '#controllers/news_controller'
 
 router.get('/admin/login', 'AdminAuthController.showLogin')
 router.post('/admin/login', 'AdminAuthController.login')
@@ -23,6 +25,22 @@ router.group(() => {
   // router.get('/orders', 'AdminController.orders')
   // router.get('/nails', 'AdminController.nails')
   // router.post('/nails', 'AdminController.storeNail')
+
+  router.group(() => {
+    router.get('/',       [NewsController, 'index']).as('admin.news.list')
+    router.get('/create', [NewsController, 'edit']).as('admin.news.create')
+    router.get('/edit',   [NewsController, 'edit']).as('admin.news.edit')
+    router.post('/store', [NewsController, 'store']).as('admin.news.store')
+    router.delete('/destroy/:id', [NewsController, 'delete']).as('admin.news.destroy')
+  }).prefix('/news')
+
+  router.group(() => {
+    router.get('/',       [ServiceController, 'index']).as('admin.services.list')
+    router.get('/create', [ServiceController, 'edit']).as('admin.services.create')
+    router.get('/edit',   [ServiceController, 'edit']).as('admin.services.edit')
+    router.post('/store', [ServiceController, 'store']).as('admin.services.store')
+    router.delete('/destroy/:id', [ServiceController, 'delete']).as('admin.services.destroy')
+  }).prefix('/services')
 
   router.group(() => {
     router.get('/',       [BookingsController, 'index']).as('bookings.index')
@@ -57,7 +75,7 @@ router.group(() => {
 
 router.group(() => {
   // Trả về danh sách mẫu nail cho Collection
-  router.get('/collections', 'NailsController.index')
+  router.get('/services', [ServiceController, 'list']).as('service.list')
   
   // Xử lý logic AI (gửi câu hỏi sang OpenAI/Gemini và trả về gợi ý)
   router.post('/ai/consult', 'AiController.analyze')
@@ -79,6 +97,11 @@ router.group(() => {
     router.get('/models/:collection', [NailsController, 'list']).as('api-nail-model.bycollection')
 
   }).prefix('/nails')
+
+  router.group(() => {
+    router.get('/search', [NewsController,'search']).as('api-news.search')
+    router.get('/detail', [NewsController,'detail']).as('api-news.detail')
+  }).prefix('/news')
 
   router.get('health-check', async () => {
     return { ok: true, time: new Date().toISOString() }

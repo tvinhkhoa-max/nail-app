@@ -1,4 +1,18 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
+import { ColorInput } from '@mantine/core'
+import { RichTextEditor, Link, useRichTextEditorContext } from '@mantine/tiptap';
+import { useEditor } from '@tiptap/react';
+import Image from '@tiptap/extension-image';
+import Highlight from '@tiptap/extension-highlight';
+import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color'
+import { FontSize, getFontSize } from './extensions/font-size'
+// import FontSize from '@tiptap/extension-font-size';
+import { IoMdPhotos } from "react-icons/io";
+// import Superscript from '@tiptap/extension-superscript';
+// import SubScript from '@tiptap/extension-subscript';
 
 interface FormInputProps {
   label: string;
@@ -112,6 +126,48 @@ export const FormSwitch: React.FC<FormSwitchProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => onChange(enabled === 1 ? 0 : 1)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+          enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-dark-4'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            enabled ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
+};
+
+interface FormSwitchBooleanProps {
+  label: string;
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  description?: string;
+  disabled?: boolean;
+}
+export const FormSwitchBoolean: React.FC<FormSwitchBooleanProps> = ({ 
+  label, 
+  enabled, 
+  onChange, 
+  description, 
+  disabled = false 
+}) => {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="flex flex-col">
+        {/* <span className="text-sm font-medium text-dark dark:text-white"></span> */}
+        <label className="mb-2 block text-xs font-bold uppercase text-body-color dark:text-dark-6">{label}</label>
+        {description && (
+          <p className="text-xs text-body-color dark:text-dark-6">{description}</p>
+        )}
+      </div>
+      
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(!enabled)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
           enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-dark-4'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -463,3 +519,186 @@ export const FormMultiSelect = ({
     </div>
   );
 };
+
+export interface RichEditorRef {
+  getHTML: () => string
+}
+
+interface Props {
+  label?: string
+  error?: string
+  content?: string
+  containerClassName?: string
+}
+
+export const FormRichEditor = forwardRef<RichEditorRef, Props>(function RichEditor(
+  {
+    label,
+    error,
+    content,
+    containerClassName,
+  },
+  ref
+) {
+
+  const editor = useEditor({
+    shouldRerenderOnTransaction: true,
+
+    extensions: [
+      StarterKit,
+      Highlight,
+      Link,
+      Image,
+      TextStyle,
+      FontSize,
+      Color,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+    ],
+
+    content,
+  })
+
+  useImperativeHandle(ref, () => ({
+    getHTML: () => {
+      return editor?.getHTML() || ''
+    },
+  }))
+
+  if (!editor) {
+    return null
+  }
+
+  return (
+    <div className={`mb-4 ${containerClassName || ''}`}>
+
+      {label && (
+        <label className="mb-2 block text-xs font-bold uppercase text-body-color dark:text-dark-6">
+          {label}
+        </label>
+      )}
+
+      <RichTextEditor editor={editor}>
+        <div className="flex items-center gap-2 mb-2">
+          <ColorInput
+            size="xs"
+            w={120}
+            value={
+              editor.getAttributes('textStyle').color || '#000000'
+            }
+            popoverProps={{
+              withinPortal: true,
+            }}
+            onChange={(value) => {
+              editor.chain().focus().setColor(value).run()
+            }}
+          />
+        </div>
+        <RichTextEditor.Toolbar
+          sticky
+          stickyOffset="var(--docs-header-height)"
+        >
+          <button type="button"
+            onClick={() => {
+              const current = getFontSize(editor)
+              const prev = current - 1
+              editor.chain().focus().setFontSize(`${prev}px`).run()
+            }}
+          >
+            A-
+          </button>
+          <button type="button"
+            onClick={() => {
+              const current = getFontSize(editor)
+              const next = current + 1
+
+              editor.chain().focus().setFontSize(`${next}px`).run()
+            }}
+          >
+            A+
+          </button>
+          <RichTextEditor.SourceCode />
+
+          <RichTextEditor.ControlsGroup>
+            
+            <RichTextEditor.Bold />
+            <RichTextEditor.Italic />
+            <RichTextEditor.Underline />
+            <RichTextEditor.Strikethrough />
+            <RichTextEditor.ClearFormatting />
+            <RichTextEditor.Highlight />
+            <RichTextEditor.Code />
+          </RichTextEditor.ControlsGroup>
+
+          <RichTextEditor.ControlsGroup>
+            <RichTextEditor.H1 />
+            <RichTextEditor.H2 />
+            <RichTextEditor.H3 />
+            <RichTextEditor.H4 />
+          </RichTextEditor.ControlsGroup>
+
+          <RichTextEditor.ControlsGroup>
+            <RichTextEditor.Blockquote />
+            <RichTextEditor.Hr />
+            <RichTextEditor.BulletList />
+            <RichTextEditor.OrderedList />
+            <RichTextEditor.Subscript />
+            <RichTextEditor.Superscript />
+          </RichTextEditor.ControlsGroup>
+
+          <RichTextEditor.ControlsGroup>
+            <RichTextEditor.Link />
+            <RichTextEditor.Unlink />
+            <InsertImageControl />
+          </RichTextEditor.ControlsGroup>
+
+          <RichTextEditor.ControlsGroup>
+            <RichTextEditor.AlignLeft />
+            <RichTextEditor.AlignCenter />
+            <RichTextEditor.AlignJustify />
+            <RichTextEditor.AlignRight />
+          </RichTextEditor.ControlsGroup>
+
+          <RichTextEditor.ControlsGroup>
+            <RichTextEditor.Undo />
+            <RichTextEditor.Redo />
+          </RichTextEditor.ControlsGroup>
+
+        </RichTextEditor.Toolbar>
+
+        <RichTextEditor.Content className="min-h-[150px]" />
+
+      </RichTextEditor>
+
+      {error && (
+        <span className="mt-1 block text-xs text-red-500">
+          {error}
+        </span>
+      )}
+
+    </div>
+  )
+})
+
+function InsertImageControl() {
+  const { editor } = useRichTextEditorContext();
+
+  const addImage = () => {
+    const url = window.prompt('Enter image URL');
+
+    if (url && editor) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  return (
+    <RichTextEditor.Control
+      onClick={addImage}
+      aria-label="Insert image"
+      title="Insert image"
+    >
+      <IoMdPhotos size="1rem" />
+    </RichTextEditor.Control>
+  );
+}

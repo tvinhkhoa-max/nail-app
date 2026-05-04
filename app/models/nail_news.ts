@@ -1,36 +1,24 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, computed, beforeCreate, beforeUpdate } from '@adonisjs/lucid/orm'
+import { BaseModel, column, computed, beforeCreate } from '@adonisjs/lucid/orm'
 import { v4 as uuid } from 'uuid'
 import { changeStatus } from '#helpers/index'
 import slugify from 'slugify';
 
-export default class NailCollection extends BaseModel {
+export default class NailNews extends BaseModel {
   public static selfAssignPrimaryKey = true
-  public static table = 'nail_collections'
+  public static table = 'nail_news'
 
   @column({ isPrimary: true })
   declare id: String
 
   @column()
-  declare name: String
+  declare title: String
 
   @column()
   declare cate: String
 
   @column()
-  declare cate_name: String
-
-  @column()
   declare tag: String
-
-  @column()
-  declare style: String
-
-  @column()
-  declare occasion: String
-
-  @column()
-  declare color: String
 
   @column()
   declare desc: String
@@ -40,6 +28,9 @@ export default class NailCollection extends BaseModel {
 
   @column()
   declare hot: Boolean
+
+  @column()
+  declare source: String
 
   @column()
   declare status: Number
@@ -56,18 +47,9 @@ export default class NailCollection extends BaseModel {
   }
 
   @beforeCreate()
-  public static assignBeforeCreate(item: NailCollection) {
+  public static assignBeforeCreate(item: NailNews) {
     if (!item.id) item.id = uuid();
-    item.tag = slugify(item.name.toLowerCase().replace(/\s+/g, '-'), {
-      lower: true,      // Chuyển thành chữ thường
-      strict: true,     // Loại bỏ các ký tự đặc biệt
-      // locale: 'vi'      // Hỗ trợ tiếng Việt
-    });
-  }
-
-  @beforeUpdate()
-  public static assignBeforeUpdate(item: NailCollection) {
-    item.tag = slugify(item.name.toLowerCase().replace(/\s+/g, '-'), {
+    item.tag = slugify(item.title.toLowerCase().replace(/\s+/g, '-'), {
       lower: true,      // Chuyển thành chữ thường
       strict: true,     // Loại bỏ các ký tự đặc biệt
       // locale: 'vi'      // Hỗ trợ tiếng Việt

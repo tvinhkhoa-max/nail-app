@@ -4,45 +4,43 @@ import { FaEdit, FaEraser } from "react-icons/fa";
 import Layout from '#resource/layouts/Layout';
 import { route } from '#resource/helpers/route'
 
-interface Nails {
-  id: string
-  name: string
-  img: string
+interface News {
+  id: number
+  title: string
+  desc: string
   cate: string
-  cateName: string
-  collection: string
-  collectionName: string
+  img: string
   status: number
-  statusText: string
+  statusText: string //'pending' | 'completed' | 'cancelled'
 }
 
-export default function NailIndex({ nails, config }: { nails: Nails[], config: any }) {
-  const handleDelete = (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa bộ sưu tập này?')) {
+export default function NewsIndex({ news, config }: { news: News[], config: any | null }) {
+  const handleDelete = (id: number) => {
+    if (confirm('Bạn có chắc chắn muốn xóa bản tin này?')) {
       // TRUYỀN ID VÀO ĐÂY
-      router.delete(route('admin.nails.destroy', { id: id }))
+      router.delete(route('admin.news.destroy', { id: id }))
     }
   }
 
   return (
     <>
-      <Head title="Kiểu Nail" />
+      <Head title="Dịch vụ" />
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-dark dark:text-white">
-            Kiểu Nail 💅
+            Bản Tin 💅
           </h2>
           <p className="text-sm text-body-color dark:text-dark-6">
-            Quản lý và theo dõi các kiểu Nail.
+            Quản lý và theo dõi các Bản Tin.
           </p>
         </div>
         
         <Link
-          href={route('nails.create')}
+          href={route('admin.news.create')}
           className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center text-base font-medium text-white hover:bg-opacity-90"
         >
-          + Thêm Kiểu mới
+          + Thêm Bản tin mới
         </Link>
       </div>
 
@@ -52,40 +50,34 @@ export default function NailIndex({ nails, config }: { nails: Nails[], config: a
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left dark:bg-dark-3">
-                <th className="py-4 px-4 font-medium text-dark dark:text-white">Kiểu Nail</th>
-                <th className="py-4 px-4 font-medium text-dark dark:text-white">Hình</th>
-                <th className="py-4 px-4 font-medium text-dark dark:text-white">Danh mục</th>
-                <th className="py-4 px-4 font-medium text-dark dark:text-white">Bộ sưu tập</th>
+                <th className="py-4 px-4 font-medium text-dark dark:text-white">Tiêu để</th>
+                <th className="py-4 px-4 font-medium text-dark dark:text-white">Hình đại điện</th>
+                <th className="py-4 px-4 font-medium text-dark dark:text-white">Loại</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white text-center">Trạng thái</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stroke dark:divide-dark-3">
-              {nails.length > 0 ? (
-                nails.map((item) => (
+              {news.length > 0 ? (
+                news.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
-                    <td className="py-4 px-4 text-body-color dark:text-dark-6">
-                      <article className="flex items-center whitespace-nowrap">
-                        <p className="font-medium text-dark dark:text-white">{item.name}</p>
-                      </article>
+                    <td className="py-4 px-4">
+                      <p className="font-medium text-dark dark:text-white">{item?.title}</p>
+                    </td>
+                    <td className="py-4 px-4">
+                      <img src={`${config?.URL_STATIC_UPLOAD}/${item.img}`} alt="News Image" style={{ width: "45px" }} />
                     </td>
                     <td className="py-4 px-4 text-body-color dark:text-dark-6">
-                      <img src={`${config?.URL_STATIC_UPLOAD}/${item.img}`} alt="Nail Image" style={{ width: "30px" }} />
-                    </td>
-                    <td className="py-4 px-4 text-body-color dark:text-dark-6">
-                      {item.cateName}
-                    </td>
-                    <td className="py-4 px-4 text-body-color dark:text-dark-6">
-                      {item.collectionName}
+                      {item?.cate}
                     </td>
                     <td className="py-4 px-4 text-center">
                       <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${getStatusClass(item.status)}`}>
-                        {item.statusText.toUpperCase()}
+                        {item.statusText}
                       </span>
                     </td>
-                    <td className="py-4 px-4 justify-end text-right text-sm text-gray-500">
+                    <td className="py-4 px-4 text-right">
                       <div className="flex justify-end">
-                        <Link href={route('nails.edit', { id: item.id })} alt="Sửa" >
+                        <Link href={route('admin.news.edit', { id: item.id })} alt="Sửa">
                           <FaEdit className="mr-2 ml-auto text-xl" title="Sửa" color="green" />
                         </Link>
 
@@ -101,8 +93,8 @@ export default function NailIndex({ nails, config }: { nails: Nails[], config: a
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-body-color">
-                    Chưa có kiểu Nail nào.
+                  <td colSpan={5} className="py-10 text-center text-body-color">
+                    Chưa có Bản Tin nào.
                   </td>
                 </tr>
               )}
@@ -124,4 +116,4 @@ const getStatusClass = (status: number) => {
   }
 }
 
-NailIndex.layout = (page: React.ReactNode) => <Layout children={page} />
+NewsIndex.layout = (page: React.ReactNode) => <Layout children={page} />

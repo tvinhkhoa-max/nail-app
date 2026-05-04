@@ -97,7 +97,6 @@ export default class BookingsController {
     // #-3560405816
     const { name, phone, date, time } = data;
     const token = "8597210493:AAGddW8Irf55XC07R6lzB84pe_9kSpVPn8c"; // Token từ BotFather
-    // const chatId = "-1003560405816"; // Chat ID của Group (có dấu trừ)
     const chatId = "-5273394489"
 
     const message = `

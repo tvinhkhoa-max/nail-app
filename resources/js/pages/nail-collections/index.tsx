@@ -1,6 +1,6 @@
 import React from 'react'
 import { Head, Link, router } from '@inertiajs/react'
-import { FaEdit, FaEraser } from "react-icons/fa";
+import { FaEdit, FaEraser, FaCheck } from "react-icons/fa";
 import { RiQuillPenAiLine } from "react-icons/ri";
 import Layout from '#resource/layouts/Layout';
 import { route } from '#resource/helpers/route';
@@ -10,6 +10,7 @@ interface NailCollection {
   name: string
   img: string
   cateName: string
+  hot: true
   style: string
   occasion: string
   color: string
@@ -57,6 +58,7 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Tên sưu tập</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Hình</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Loại</th>
+                <th className="py-4 px-4 font-medium text-dark dark:text-white">Hot</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Phong Cách</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Tone màu</th>
                 <th className="py-4 px-4 font-medium text-dark dark:text-white">Dịp</th>
@@ -77,6 +79,9 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
                     </td>
                     <td className="py-4 px-4 text-body-color dark:text-dark-6">
                       {item.cateName}
+                    </td>
+                    <td className="py-4 px-4 text-body-color dark:text-dark-6">
+                      {item.hot && <FaCheck />}
                     </td>
                     <td className="py-4 px-4 text-body-color dark:text-dark-6">
                       {item.style}

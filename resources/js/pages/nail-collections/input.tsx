@@ -4,13 +4,14 @@ import Layout from '#resource/layouts/Layout'
 import { 
   SearchableSelectForm, 
   SearchableSelect2, 
-  FormSwitch, 
+  FormSwitch, FormSwitchBoolean,
   FormInput, 
-  FormTextarea } from '#resource/components/Form.js'
+  FormTextarea
+} from '#resource/components/Form'
 
 // Định nghĩa các tập dữ liệu cho Combobox
 const STYLES = ["Nhẹ nhàng", "Sang chảnh", "Cute", "Cá tính", "Cổ điển", "Phá cách"];
-const COLORS = ["Nude", "Đỏ", "Trắng", "Đen", "Xanh dương", "Hồng phấn", "Vàng kim", "Bạc"];
+const COLORS = ["Nude", "Đỏ", "Trắng", "Đen", "Xanh dương", "Hồng phấn", "Vàng kim", "Bạc", "Hồng"];
 const OCCASIONS = ["Đi làm", "Đi tiệc", "Hẹn hò", "Đi biển", "Đám cưới"];
 
 interface NailCate {
@@ -28,21 +29,23 @@ interface NailCollection {
   color: string
   occasion: string
   img?: string // Đường dẫn ảnh cũ từ server
+  hot?: boolean
   desc: string
   status: boolean | number
 }
 
 interface Props {
   nailCates: NailCate[]
-  collection?: NailCollection // Prop optional cho trường hợp Update
+  collection?: NailCollection, // Prop optional cho trường hợp Update
+  config: any | null
 }
 
-export default function InputNailCollection({ nailCates, collection }: Props) {
+export default function InputNailCollection({ nailCates, collection, config }: Props) {
   // Xác định mode dựa trên việc có truyền collection vào hay không
   const isUpdate = !!collection?.id
 
   const [previews, setPreviews] = useState<string[]>(
-    collection?.img ? [collection.img] : []
+    collection?.img ? [`${config?.URL_STATIC_UPLOAD}/${collection.img}`] : []
   )
   // const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [searchTerms, setSearchTerms] = useState({ style: '', color: '', occasion: '' })
@@ -55,6 +58,7 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
     color: collection?.color || 'Nude',
     occasion: collection?.occasion || 'Đi làm',
     img: collection?.img || null as File | null,
+    hot: collection?.hot || null,
     desc: collection?.desc || '',
     status: collection ? (Number(collection.status)) : 0,
   })
@@ -97,9 +101,9 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
           </p>
         </div>
         {isUpdate && (
-           <span className="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full font-bold">
-             ID: {collection?.id}
-           </span>
+        <span className="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full font-bold">
+          ID: {collection?.id}
+        </span>
         )}
       </div>
 
@@ -131,7 +135,7 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
                 label="Danh mục"
                 value={data.cate}
                 options={optionCates}
-                onChange={(val) => setData('cate', val)}
+                onChange={(val: any) => setData('cate', val)}
                 placeholder="Chọn danh mục..."
               />
 
@@ -163,6 +167,16 @@ export default function InputNailCollection({ nailCates, collection }: Props) {
                 searchTerm={searchTerms.occasion}
                 onSearchChange={(val: any) => setSearchTerms({...searchTerms, occasion: val})}
                 onSelect={(val: any) => setData('occasion', val)}
+              />
+            </div>
+
+            {/* Hot */}
+            <div className="w-full md:w-1/2">
+              <FormSwitchBoolean
+                label="Bộ sưu tập Hot"
+                description="Hiển lên đầu trang chủ App"
+                enabled={data.hot}
+                onChange={(val: any) => setData('hot', val)}
               />
             </div>
 

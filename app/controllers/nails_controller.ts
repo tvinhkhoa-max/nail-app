@@ -1,11 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
-// import { inject } from '@adonisjs/core'
+import { inject } from '@adonisjs/core'
+import db from '@adonisjs/lucid/services/db'
 import { cuid } from '@adonisjs/core/helpers'
-// import NailService from '#services/nail_service'
-import { extractNailAll, removeBg } from '#services/nailPipeline'
 import fs from 'fs/promises'
 import { existsSync } from 'node:fs'
 import slugify from 'slugify'
+import { extractNailAll, removeBg } from '#services/nailPipeline'
 import { getPathImageUpload } from '#helpers/index'
 import { uploadImage } from '#services/supabase'
 
@@ -13,9 +13,13 @@ import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
 import Nail from '#models/nail'
 
-// @inject()
+@inject()
 export default class NailsController {
-  // constructor(protected nailService: NailService) {}
+  // constructor(
+  //   protected cateModel: typeof NailCate,
+  //   protected collectionModel: typeof NailCollection,
+  //   protected nailModel: typeof Nail,
+  // ) {}
 
   /**
    * Hiển thị danh sách (Index)
@@ -45,7 +49,7 @@ export default class NailsController {
     }))
 
     const config = {
-      URL_STATIC_UPLOAD: (process.env?.NODE_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
+      URL_STATIC_UPLOAD: (process.env?.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
     }
 
     return inertia.render('nails/index', { nails, config })
@@ -98,7 +102,8 @@ export default class NailsController {
     const useAI = request.input('useAi');
     const errors: any = []
     const payload = request.only(['id', 'name', 'cate', 'collection', 'status'])
-    let croppedImage: any = null
+    let croppedImage: any = null;
+    const trx = await db.transaction();
 
     if (!payload['id']) {
       croppedImage = request.file('nail_image', {
@@ -187,7 +192,7 @@ export default class NailsController {
         let pathImageUpload: string
 
         if (result) {
-          if (!process.env.NODE_ENV || process.env.NODE_ENV != 'development') {
+          if (!process.env.APP_ENV || process.env.APP_ENV != 'development') {
             const uploadInfo = await uploadImage(result, 'nails', 'webp')
             pathImageUpload = uploadInfo.path;
           } else {
@@ -198,8 +203,8 @@ export default class NailsController {
           if (base64Image) {
 
             // Lưu vào DB (Giả định bạn có Model Nail)
-            await Nail.create({ ...payload, img: pathImageUpload })
-
+            await Nail.create({ ...payload, img: pathImageUpload }, { client: trx })
+            await trx.commit();
             session.flash({ success: 'Đã lưu kiểu móng mới.', flash_id: Date.now() })
             // return response.redirect('/admin/nails')
     
@@ -209,7 +214,9 @@ export default class NailsController {
       } else {
         session.flash('success', 'Dữ liệu lưu thành công!')
 
-        await Nail.updateOrCreate({ id: payload['id']}, payload )
+        await Nail.updateOrCreate({ id: payload['id']}, payload, { client: trx });
+        await trx.commit();
+
         return response.redirect().toRoute('nail.list')
       }
 
@@ -225,8 +232,9 @@ export default class NailsController {
         return response.redirect().back()
       }
     } catch (error) {
+      await trx.rollback();
 
-      // console.log(error)
+      console.log(error)
 
       errors.push('Hệ thống không thể thao tác, vui lòng liên hệ với Admin quản trị!')
 
@@ -275,16 +283,18 @@ export default class NailsController {
 
   async delete({ session, request, response }: HttpContext) {
     const params = request.only(['id']);
-    const errors: any = []
+    const errors: any = [];
+    const trx = await db.transaction();
 
     try {
-      const nail = await Nail.findBy('id', params['id'])
+      const nail = await Nail.findBy('id', params['id'], { client: trx })
 
       if (!nail) errors.push('Không tìm thấy kiểu móng')
       else {
         const imgPath = `./${nail.img}`;
 
-        await nail.delete();
+        await nail?.useTransaction(trx).delete();
+        await trx.commit()
 
         if (existsSync(imgPath))
           fs.unlink(imgPath);
@@ -303,6 +313,8 @@ export default class NailsController {
       return response.redirect().toRoute('nails.list')
 
     } catch (error) {
+      await trx.rollback();
+
       errors.push('Hệ thống không thể thao tác, vui lòng liên hệ với Admin quản trị!')
 
       // Gửi nguyên mảng lỗi vào session

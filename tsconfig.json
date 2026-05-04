@@ -14,6 +14,8 @@
     "paths": {
       "@/*": ["./*"]
     },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": [
       "@adonisjs/core",
       "@adonisjs/lucid",
