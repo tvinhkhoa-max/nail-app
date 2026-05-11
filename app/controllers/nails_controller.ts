@@ -3,11 +3,14 @@ import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import { cuid } from '@adonisjs/core/helpers'
 import fs from 'fs/promises'
-import { existsSync } from 'node:fs'
+import  * as fileSystem from 'node:fs'
+// import { existsSync } from 'node:fs'
 import slugify from 'slugify'
-import { extractNailAll, removeBg } from '#services/nailPipeline'
+import { extractNailAll, removeBg, extractNailByPolygon } from '#services/nailPipeline'
 import { getPathImageUpload } from '#helpers/index'
-import { uploadImage } from '#services/supabase'
+import { uploadImage, removeImageStorage } from '#services/supabase'
+import axios from 'axios'
+import FormData from 'form-data'
 
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
@@ -15,11 +18,6 @@ import Nail from '#models/nail'
 
 @inject()
 export default class NailsController {
-  // constructor(
-  //   protected cateModel: typeof NailCate,
-  //   protected collectionModel: typeof NailCollection,
-  //   protected nailModel: typeof Nail,
-  // ) {}
 
   /**
    * Hiển thị danh sách (Index)
@@ -94,157 +92,81 @@ export default class NailsController {
     return inertia.render('nails/manage', { nailCates: nailCates, nailCollections, collection, nail, pathUpload: getPathImageUpload() })
   }
 
-  async store({ request, response, session }: HttpContext) {
-    // 1. Luôn nhận file đã crop (nail_image)
-    // console.log('All Files:', request.allFiles())
-    // console.log('All Input:', request.all())
+async store({ request, response, session }: HttpContext) {
+  // 1. Lấy các tham số điều hướng từ Client
+  const { id, process_mode, use_ai, polygon_data, ...payload } = request.all()
+  const _payload = request.only(['id', 'name', 'cate', 'collection', 'status']);
+  const trx = await db.transaction();
+  // console.log('All Files:', request.allFiles());
+  // console.log(process_mode);
+  // return {};
 
-    const useAI = request.input('useAi');
-    const errors: any = []
-    const payload = request.only(['id', 'name', 'cate', 'collection', 'status'])
-    let croppedImage: any = null;
-    const trx = await db.transaction();
+  try {
+    const nailFile = request.file('nail_image')
+    let finalBuffer: Buffer | null = null
+    let pathImageUpload: string = '';
 
-    if (!payload['id']) {
-      croppedImage = request.file('nail_image', {
-        size: '2mb',
-        extnames: ['png'],
-      }) || null
 
-      if (!croppedImage) {
-        session.flash('error', 'Không tìm thấy ảnh đã crop.')
-        return response.redirect().back()
+    // CHỈ XỬ LÝ NẾU CÓ FILE GỬI LÊN (CROP hoặc POLYGON)
+    if (nailFile) {
+      const sourceBuffer = await fs.readFile(nailFile.tmpPath!)
+
+      if (process_mode === 'polygon') {
+
+        // Nhánh Polygon: Gửi Buffer ảnh (đã xoay sẵn từ Client) + tọa độ sang Python
+        const points = JSON.parse(polygon_data);
+        finalBuffer = await extractNailByPolygon(sourceBuffer, points)
+      }  else if (process_mode === 'crop') {
+
+        // Nhánh Crop hoặc None: File gửi lên đã là kết quả cuối hoặc ảnh gốc
+        finalBuffer = sourceBuffer
+        if (finalBuffer) {
+          if (JSON.parse(use_ai)) {
+            finalBuffer = await extractNailAll(finalBuffer) // AI tách móng + nền
+          } else {
+            finalBuffer = await removeBg(finalBuffer) // Chỉ xóa nền
+          }
+        }
+
       }
     }
 
-    // 2. Kiểm tra nguồn ảnh gốc
-    // const sourceType = request.input('source_type')
-    // let sourcePath = ''
+    // 3. Lưu file vào ổ cứng/CDN
+    if (finalBuffer) {
+      const nailNameSlug = slugify(_payload.name || 'nail', { lower: true })
+      const fileName = `nail-${nailNameSlug}-${cuid()}.webp`
 
-    // if (sourceType === 'upload') {
-    //   // Trường hợp A: Xử lý file gốc upload mới (nail_image_raw)
-    //   const rawImage = request.file('nail_image_raw')
-    //   if (rawImage) {
-    //     // Lưu ảnh gốc vào disk
-    //     const fileName = `${cuid()}_raw.${rawImage.extname}`
-    //     await rawImage.move(Application.tmpPath('uploads'), { name: fileName })
-    //     sourcePath = `uploads/${fileName}`
-    //   }
-    // } else {
-    //   // Trường hợp B: Lấy URL ảnh nguồn đã có sẵn (source_image_url)
-    //   sourcePath = request.input('source_image_url')
-    // }
-
-    // 3. Lưu ảnh đã crop (để hiển thị trên móng tay AR)
-    // const croppedFileName = `${cuid()}_cropped.png`
-    // await croppedImage.move(Application.disk('s3').tmpPath('nails'), { name: croppedFileName })
-
-    // const fileName = `${Date.now()}.${croppedImage?.extname}`
-    // const filePath = path.join('tmp', fileName)
-    const nailName = payload['name'] ? slugify(payload['name'].toLowerCase().replace(/\s+/g, '-'), {
-      lower: true,
-      strict: true,
-      locale: 'vi'
-    }) : '';
-
-    // await croppedImage?.move('tmp', {
-    //   name: fileName,
-    // })
-
-    try {
-
-      if (croppedImage) { //console.log('Go'); return {};
-        let result: any = null
-        // const uploadInfo: any = null
-        try {
-
-          if (!croppedImage?.tmpPath) {
-            errors.push('Không tìm thấy ảnh đã crop')
-            throw new Error('tmpPath is undefined')
-          }
-
-          const imageBuffer = await fs.readFile(croppedImage.tmpPath)
-
-          // Gọi service xử lý
-          // const imageUrl = await this.nailService.processAndSaveArImage(filePath!)
-
-          if (JSON.parse(useAI)) {
-            // process all (remove background + AI extract nail)
-            result = await extractNailAll(imageBuffer)
-          } else {
-            // remove background
-            result = await removeBg(imageBuffer)
-          }
-
-          fs.unlink(croppedImage.tmpPath);
-
-          // return response.ok({
-          //   img: result.toString('base64')
-          // })
-
-        } catch (error) {
-
-          errors.push('Tạo ảnh móng thất bại')
-          throw(error)
-        }
-
-        let base64Image = result.toString('base64').split(';base64,').pop();
-        let pathImageUpload: string
-
-        if (result) {
-          if (!process.env.APP_ENV || process.env.APP_ENV != 'development') {
-            const uploadInfo = await uploadImage(result, 'nails', 'webp')
-            pathImageUpload = uploadInfo.path;
-          } else {
-            pathImageUpload = `public/images/nails/nail-${nailName}-${cuid()}.webp`;
-            fs.writeFile(`./${pathImageUpload}`, base64Image, {encoding: 'base64'});
-          }
-
-          if (base64Image) {
-
-            // Lưu vào DB (Giả định bạn có Model Nail)
-            await Nail.create({ ...payload, img: pathImageUpload }, { client: trx })
-            await trx.commit();
-            session.flash({ success: 'Đã lưu kiểu móng mới.', flash_id: Date.now() })
-            // return response.redirect('/admin/nails')
-    
-          } else
-            errors.push('Tạo dữ liệu kiểu móng thất bại')
-        }
+      if (process.env.APP_ENV === 'production') {
+        const uploadInfo = await uploadImage(finalBuffer, 'nails', 'webp')
+        pathImageUpload = uploadInfo.path
       } else {
-        session.flash('success', 'Dữ liệu lưu thành công!')
-
-        await Nail.updateOrCreate({ id: payload['id']}, payload, { client: trx });
-        await trx.commit();
-
-        return response.redirect().toRoute('nail.list')
+        pathImageUpload = `public/images/nails/${fileName}`
+        await fs.writeFile(`./${pathImageUpload}`, finalBuffer)
       }
-
-      if (errors.length > 0) {
-        // Gửi nguyên mảng lỗi vào session
-        session.flash('error', errors)
-        session.flash('flash_id', Date.now())
-
-        return response.redirect().back()
-
-      } else {
-
-        return response.redirect().back()
-      }
-    } catch (error) {
-      await trx.rollback();
-
-      console.log(error)
-
-      errors.push('Hệ thống không thể thao tác, vui lòng liên hệ với Admin quản trị!')
-
-      // Gửi nguyên mảng lỗi vào session
-      session.flash('error', errors) 
-      session.flash('flash_id', Date.now())
-
-      return response.redirect().back()
     }
+
+    // 4. Cập nhật Database
+    const dbData = { 
+      ..._payload,
+      ...(pathImageUpload && { img: pathImageUpload }) // Chỉ update field img nếu có ảnh mới
+    }
+
+    if (_payload['id'])
+      await Nail.updateOrCreate({ id: id }, dbData, { client: trx })
+    else
+      await Nail.create(dbData, { client: trx })
+
+    await trx.commit()
+    session.flash('success', 'Đã lưu dữ liệu móng thành công!')
+    return response.redirect().back()
+
+  } catch (error) {
+    await trx.rollback()
+    console.error('Lỗi Server:', error)
+    session.flash('error', 'Hệ thống gặp lỗi khi xử lý ảnh.')
+    return response.redirect().back()
   }
+}
 
   /**
    * Xử lý lưu dữ liệu (Store)
@@ -296,8 +218,12 @@ export default class NailsController {
         await nail?.useTransaction(trx).delete();
         await trx.commit()
 
-        if (existsSync(imgPath))
-          fs.unlink(imgPath);
+        if (!process.env?.APP_ENV || process.env?.APP_ENV != 'development') {
+          removeImageStorage(nail.img);
+        } else {
+          if (fileSystem.existsSync(imgPath))
+            fs.unlink(imgPath);
+        }
 
         session.flash({ success: 'Đã xoá thành công.', flash_id: Date.now() })
       }
@@ -310,7 +236,7 @@ export default class NailsController {
         return response.redirect().back()
       } 
 
-      return response.redirect().toRoute('nails.list')
+      return response.redirect().toRoute('admin.nails.list')
 
     } catch (error) {
       await trx.rollback();
@@ -347,5 +273,76 @@ export default class NailsController {
         });
       }
     }
+  }
+
+  async segment({ request, response }: HttpContext) {
+    const { points, mode } = request.all();
+    const image = request.file('file');
+    let buffer: any = null;
+
+    if (!image) {
+      return response.badRequest('No file')
+    }
+
+    if (image?.tmpPath) {
+      buffer = await fs.readFile(image.tmpPath);
+    }
+
+    const aiRes = await fetch('http://localhost:8000/segment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        points,
+        'mode': mode
+      },
+      body: buffer
+    })
+
+    const bufferRes = await aiRes.arrayBuffer()
+
+    // response.header('Content-Type', 'image/png')
+
+    // return response.send(Buffer.from(buffer))
+    return response
+      .header('Content-Type', 'image/png')
+      .send(Buffer.from(bufferRes));
+  }
+
+  async point({ request, response }: HttpContext) {
+    const { point, mode } = request.all();
+    const image = request.file('file');
+    if (!image || !image.tmpPath) {
+      return response.badRequest('No file')
+    }
+
+    const form = new FormData()
+    const readStream: any = fileSystem.createReadStream(image?.tmpPath);
+    form.append('file', readStream)
+    form.append('filename', image.clientName)
+    form.append('contentType', image.headers['content-type'])
+
+    // const aiRes = await fetch('http://localhost:8000/point', {
+    //   method: 'POST',
+    //   headers: {
+    //     ...form.getHeaders(),
+    //     'point': String(point),
+    //     'mode': mode
+    //   },
+    //   body: form
+    // })
+    const pythonResponse = await axios.post('http://localhost:8000/point', form, {
+      headers: {
+        // Lúc này .getHeaders() sẽ tồn tại và trả về 'multipart/form-data; boundary=...'
+        ...form.getHeaders(), 
+        'point': String(point) || ''
+      },
+      responseType: 'arraybuffer'
+    })
+    return response.type('image/png').send(pythonResponse.data)
+    // const bufferRes = await aiRes.arrayBuffer();
+    // return response
+    //   .header('Content-Type', 'image/png')
+    //   .send(Buffer.from(bufferRes));
+
   }
 }

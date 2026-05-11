@@ -50,18 +50,18 @@ router.group(() => {
   }).prefix('/bookings')
 
   router.group(() => {
-    router.get('/',       [NailsController, 'index']).as('nails.list').as('nail.list')
-    router.get('/create', [NailsController, 'edit']).as('nails.create')
+    router.get('/',       [NailsController, 'index']).as('admin.nails.list')
+    router.get('/create', [NailsController, 'edit']).as('admin.nails.create')
     router.get('/create/:collection', [NailsController, 'edit']).as('nails.create-by-collection')
-    router.get('/edit',   [NailsController, 'edit']).as('nails.edit')
+    router.get('/edit',   [NailsController, 'edit']).as('admin.nails.edit')
     router.post('/store', [NailsController, 'store']).as('admin.nails.store')
     router.delete('/destroy/:id', [NailsController, 'delete']).as('admin.nails.destroy')
 
-    router.get('/collections',        [NailCollectionsController, 'index']).as('nail-collection.list')
-    router.get('/collections/create', [NailCollectionsController, 'edit']).as('nail-collection.create')
-    router.get('/collections/edit',   [NailCollectionsController, 'edit']).as('nail-collection.edit')
-    router.post('/collections/store', [NailCollectionsController, 'store']).as('nail-collection.store')
-    router.delete('/collections/destroy/:id', [NailCollectionsController, 'delete']).as('nail-collection.destroy')
+    router.get('/collections',        [NailCollectionsController, 'index']).as('admin.nail-collection.list')
+    router.get('/collections/create', [NailCollectionsController, 'edit']).as('admin.nail-collection.create')
+    router.get('/collections/edit',   [NailCollectionsController, 'edit']).as('admin.nail-collection.edit')
+    router.post('/collections/store', [NailCollectionsController, 'store']).as('admin.nail-collection.store')
+    router.delete('/collections/destroy/:id', [NailCollectionsController, 'delete']).as('admin.nail-collection.destroy')
 
     router.get('/cates',        [NailCatesController, 'index']).as('nail-cate.list')
     router.get('/cates/create', [NailCatesController, 'edit']).as('nail-cate.create')
@@ -89,13 +89,14 @@ router.group(() => {
     router.get('/cates', [NailCatesController,'list']).as('api-nail-cate.list')
     router.get('/cates/:id', [NailCatesController, 'list'])
 
-    router.get('/collections', [NailCollectionsController, 'list']).as('api-nail-collection.list')
+    router.get('/collections', [NailCollectionsController, 'list']).as('api-admin.nail-collection.list')
     // router.get('/collections/:q', [NailCollectionsController, 'list'])
     router.get('/collections/search', [NailCollectionsController, 'search']).as('api-nail-collection.search')
 
     router.get('/models', [NailsController, 'list']).as('api-nail-model.list')
     router.get('/models/:collection', [NailsController, 'list']).as('api-nail-model.bycollection')
-
+    router.post('/segment', [NailsController, 'segment']).as('api-nail-model.segment')
+    router.post('/point', [NailsController, 'point']).as('api-nail-model.point')
   }).prefix('/nails')
 
   router.group(() => {

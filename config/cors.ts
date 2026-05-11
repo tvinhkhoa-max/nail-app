@@ -14,7 +14,7 @@ const corsConfig = defineConfig({
     'https://nailsxanh-h2x7.onrender.com',
   ],
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'],
-  headers: false,
+  headers: true,
   exposeHeaders: [],
   credentials: true,
   maxAge: 90,

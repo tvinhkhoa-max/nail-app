@@ -95,7 +95,7 @@ export default class BookingsController {
 
   async sendMessageTelegram(data: any) {
     // #-3560405816
-    const { name, phone, date, time } = data;
+    const { name, phone, date, time, service } = data;
     const token = "8597210493:AAGddW8Irf55XC07R6lzB84pe_9kSpVPn8c"; // Token từ BotFather
     const chatId = "-5273394489"
 
@@ -106,6 +106,7 @@ export default class BookingsController {
   📞 *Số điện thoại:* ${phone}
   📅 *Ngày hẹn:* ${date}
   ⏰ *Giờ hẹn:* ${time}
+  💅 *Dịch vụ:* ${service || "Tư vấn"}
   -------------------------
   _Tin nhắn tự động từ NailsXanh_
     `;

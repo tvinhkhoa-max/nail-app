@@ -176,3 +176,25 @@ export async function extractNailAll(buffer: Buffer) {
 
   return Buffer.from(res.data.image, 'base64')
 }
+
+export async function extractNailByPolygon(buffer: Buffer, points: any[]) {
+  const form = new FormData()
+  form.append('file', buffer, 'image.png')
+
+  // const _p = points.map((point: any) => `${point.x},${point.y}`) || []
+  const _p = points.map((point: any) => `${point.x},${point.y}`).join(';')
+  form.append('points', _p)
+
+  const URL_SERVER_SEGMENT = process.env.PUBLIC_URL_PROCESS_IMG
+  const res = await axios.post(
+    `${URL_SERVER_SEGMENT}/cut-polygon`,
+    form,
+    {
+      headers: { ...form.getHeaders() },
+      responseType: 'arraybuffer',
+      timeout: 120000
+    }
+  )
+
+  return Buffer.from(res.data)
+}

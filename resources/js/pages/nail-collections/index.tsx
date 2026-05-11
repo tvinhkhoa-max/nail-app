@@ -22,7 +22,7 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
   const handleDelete = (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa bộ sưu tập này?')) {
       // TRUYỀN ID VÀO ĐÂY
-      router.delete(route('nail-collection.destroy', { id: id }))
+      router.delete(route('admin.nail-collection.destroy', { id: id }))
     }
   }
   // const { props } = usePage();
@@ -42,7 +42,7 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
         </div>
         
         <Link
-          href="/admin/nails/collections/create"
+          href={route('admin.nail-collection.create')}
           className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center text-base font-medium text-white hover:bg-opacity-90"
         >
           + Thêm bộ mới
@@ -99,11 +99,11 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
                     </td>
                     <td className="py-4 px-4 justify-end text-right text-sm text-gray-500">
                       <div className="flex justify-end">
-                        <Link href={route('nails.create')} data={{"collection": item.id}} alt="Thêm kiểu" >
+                        <Link href={route('admin.nails.create')} data={{"collection": item.id}} alt="Thêm kiểu" >
                           <RiQuillPenAiLine className="mr-2 ml-auto text-xl" title="Thêm kiểu" color="blue" />
                         </Link>
 
-                        <Link href="/admin/nails/collections/edit" data={{"id": item.id}} alt="Sửa" >
+                        <Link href={route('admin.nail-collection.edit')} data={{"id": item.id}} alt="Sửa" >
                           <FaEdit className="mr-2 ml-auto text-xl" title="Sửa" color="green" />
                         </Link>
 

@@ -1,3 +1,5 @@
+import axios from 'axios'
+import fs from 'fs/promises'
 import config from '@adonisjs/core/services/config'
 
 export const changeStatus = (value: number) => {
@@ -23,4 +25,17 @@ export const getPathImageUpload = () => {
 
   return (process.env.APP_ENV && process.env.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD);
 
+}
+
+// Helper để lấy Buffer từ bất kỳ nguồn nào
+export async function getImageBuffer(urlOrPath: string) {
+  if (urlOrPath.startsWith('http')) {
+    // Nếu là link CDN
+    const response = await axios.get(urlOrPath, { responseType: 'arraybuffer' });
+    return Buffer.from(response.data);
+  } else {
+    // Nếu là file cục bộ (sau khi upload)
+    // return await fs.readFile(publicPath(urlOrPath));
+    return await fs.readFile((urlOrPath));
+  }
 }

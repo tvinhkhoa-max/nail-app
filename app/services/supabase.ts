@@ -57,7 +57,7 @@ export const uploadImage = async (
 
   const filePath = `${folder}/${fileName}`
 
-  console.log('UPLOAD PATH:', filePath)
+  // console.log('UPLOAD PATH:', filePath)
 
   const { error } = await supabase.storage
     .from('images')

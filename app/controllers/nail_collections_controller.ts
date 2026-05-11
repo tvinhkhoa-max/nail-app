@@ -147,7 +147,7 @@ export default class NailCollectionsController {
         return response.redirect().toPath(`/admin/nails?collection=${result.id}`)
       }
 
-      return response.redirect().toRoute('nail-collection.list', { id: input.id })
+      return response.redirect().toRoute('admin.nail-collection.list', { id: input.id })
 
     } catch (error) {
       await trx.rollback();
@@ -189,7 +189,7 @@ export default class NailCollectionsController {
 
         await trx.commit()
 
-        if (!process.env.NODE_ENV || process.env.NODE_ENV != 'development') {
+        if (!process.env.APP_ENV || process.env.APP_ENV != 'development') {
           await removeImageStorage(collection.img)
         } else {
           if (existsSync(imgPath))
@@ -207,7 +207,7 @@ export default class NailCollectionsController {
         return response.redirect().back()
       } 
 
-      return response.redirect().toRoute('nail-collection.list')
+      return response.redirect().toRoute('admin.nail-collection.list')
 
     } catch (error) {
       await trx.rollback()
@@ -241,19 +241,23 @@ export default class NailCollectionsController {
         .if(hot && hot === 'true', (query) => {
           query.whereNotNull('nail_collections.hot').where('nail_collections.hot', true)
         })
-        // .orderBy('nail_collections.createdAt')
+        .orderBy('nail_collections.created_at')
+        .select('nail_collections.*')
 
-      query.paginate(page, limit)
+      // query
       const collections = await query
-                                  .select('nail_collections.*')
-                                  .exec() || [];
+        .paginate(page, limit);
+
+      const data = (await collections.toJSON())
       response.status(201).send({
-        data: collections
+        data: data?.data || [],
+        total: data?.meta.total
       });
     } catch (error) {
       console.log(error)
       response.status(201).send({
-        data: []
+        data: [],
+        total: 0
       });
     }
   }
@@ -274,19 +278,24 @@ export default class NailCollectionsController {
         else
           query.where('nail_cates.tag', keyword)
 
-      query.paginate(page, limit)
+      query.
+        orderBy('nail_collections.created_at')
+        .select('nail_collections.*')
 
       const result = await query
-        .select('nail_collections.*')
-        .exec() || []
+        .paginate(page, limit)
+
+      const data = (await result.toJSON())
 
       response.status(201).send({
-        data: result
+        data: data?.data || [],
+        total: data?.meta.total
       });
     } catch(error) {
       console.log(error)
       response.status(201).send({
-        data: []
+        data: [],
+        total: 0
       });
     }
   }

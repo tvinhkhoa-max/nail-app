@@ -7,7 +7,8 @@ import {
   FormSwitch, FormSwitchBoolean,
   FormInput, 
   FormTextarea
-} from '#resource/components/Form'
+} from '#resource/components/Form';
+import { route } from '#resource/helpers/route';
 
 // Định nghĩa các tập dữ liệu cho Combobox
 const STYLES = ["Nhẹ nhàng", "Sang chảnh", "Cute", "Cá tính", "Cổ điển", "Phá cách"];
@@ -84,7 +85,7 @@ export default function InputNailCollection({ nailCates, collection, config }: P
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    post('/admin/nails/collections/store', { forceFormData: true })
+    post(route('admin.nail-collection.store'), { forceFormData: true })
   }
 
   return (
