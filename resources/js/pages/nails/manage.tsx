@@ -375,7 +375,7 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
     e.preventDefault();
     // if ((!completedCrop && !nail?.id) || (!imgRef.current && !nail?.id)) return;
 
-    const image = imgRef.current; console.log(image)
+    const image = imgRef.current;
     if (!image) return;
 
     const meta = (window as any).__imgMeta;
@@ -394,31 +394,53 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
     const ctx = canvas.getContext('2d')!;
 
     if (processMode === 'crop') {
-      // Logic Cắt (Crop)
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
-      canvas.width = completedCrop!.width * scaleX;
-      canvas.height = completedCrop!.height * scaleY;
+      // 1. Tỉ lệ giữa ảnh hiển thị và ảnh gốc thực tế
+      const scaleX = image.naturalWidth / image.width
+      const scaleY = image.naturalHeight / image.height
+      // devicePixelRatio slightly increases sharpness on retina devices
+      // at the expense of slightly slower render times and needing to
+      // size the image back down if you want to download/upload and be
+      // true to the images natural size.
+      const pixelRatio = window.devicePixelRatio
+      // const pixelRatio = 1
 
-      ctx.save();
-      ctx.translate(-completedCrop!.x * scaleX, -completedCrop!.y * scaleY);
-      ctx.translate(image.naturalWidth / 2, image.naturalHeight / 2);
-      ctx.rotate((rotate * Math.PI) / 180);
-      ctx.scale(scale, scale);
-      ctx.translate(-image.naturalWidth / 2, -image.naturalHeight / 2);
-      ctx.drawImage(image, 0, 0);
-      ctx.restore();
-    } 
-    else if (processMode === 'polygon') {
-      // Logic Xoay nguyên tấm (Polygon)
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
+      canvas.width = Math.floor(completedCrop!.width * scaleX * pixelRatio)
+      canvas.height = Math.floor(completedCrop!.height * scaleY * pixelRatio)
 
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((rotate * Math.PI) / 180);
-      ctx.scale(scale, scale);
-      ctx.drawImage(image, -canvas.width / 2, -canvas.height / 2);
+      ctx.scale(pixelRatio, pixelRatio)
+      ctx.imageSmoothingQuality = 'high'
+
+      const cropX = completedCrop!.x * scaleX
+      const cropY = completedCrop!.y * scaleY
+
+      const rotateRads = rotate * (Math.PI / 180)
+      const centerX = image.naturalWidth / 2
+      const centerY = image.naturalHeight / 2
+
+      ctx.save()
+
+      // 5) Move the crop origin to the canvas origin (0,0)
+      ctx.translate(-cropX, -cropY)
+      // 4) Move the origin to the center of the original position
+      ctx.translate(centerX, centerY)
+      // 3) Rotate around the origin
+      ctx.rotate(rotateRads)
+      // 2) Scale the image
+      ctx.scale(scale, scale)
+      // 1) Move the center of the image to the origin (0,0)
+      ctx.translate(-centerX, -centerY)
+      ctx.drawImage(
+        image,
+        0,
+        0,
+        image.naturalWidth,
+        image.naturalHeight,
+        0,
+        0,
+        image.naturalWidth,
+        image.naturalHeight,
+      )
+
       ctx.restore();
     }
 
@@ -481,212 +503,100 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
 
   return (
     <>
-      <Head title="Tạo kiểu Nail cho AR" />
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-dark dark:text-white uppercase tracking-wide">
-          {isUpdate ? '✨ Cập nhật kiểu Nail cho AR' : '✨ Tạo kiểu Nail cho AR' }
-        </h2>
-        <p className="text-sm text-body-color dark:text-dark-6">
-          {isUpdate ? `Chỉnh sửa: ${nail?.name}` : 'Thiết lập thông tin để khách hàng dễ dàng tìm kiếm Mẫu trên App AR' }
-        </p>
-      </div>
+<div className="flex flex-col h-screen overflow-hidden -m-4 bg-slate-100">
+      <Head title="Nail Design Studio" />
 
-      <style>{`
-        .ord-nw { top: -2px; left: -2px; border-top: 6px solid #000; border-left: 6px solid #000; }
-        .ord-ne { top: -2px; right: -2px; border-top: 6px solid #000; border-right: 6px solid #000; }
-        .ord-sw { bottom: -2px; left: -2px; border-bottom: 6px solid #000; border-left: 6px solid #000; }
-        .ord-se { bottom: -2px; right: -2px; border-bottom: 6px solid #000; border-right: 6px solid #000; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
+      {/* HEADER TOOLBAR */}
+      <header className="h-16 bg-white dark:bg-dark-2 border-b border-stroke flex items-center justify-between px-6 z-50 shadow-sm">
+        <div className="flex items-center gap-4">
+          <h2 className="font-bold text-primary uppercase tracking-wider">✨ Studio</h2>
+          <div className="h-8 w-px bg-stroke mx-2" />
+          <FormSwitchBoolean label="Chế độ Crop" enabled={isCrop} onChange={setIsCrop} />
+        </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-12">  {/*p-4*/}
-        {/* Sidebar: Thông tin & Tìm kiếm */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-stroke dark:bg-dark-2 dark:border-dark-3">
-            
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium">Tên kiểu Nail</label>
-              <FormInput 
-                label="" 
-                value={data.name} 
-                onChange={(e: any) => setData('name', e.target.value)} 
-                className="w-full" 
-              />
-              {errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
-            </div>
-
-            <div className="mb-4 relative">
-              <SearchableSelect2 
-                label="Danh mục"
-                value={data.cate}
-                options={optionCates}
-                onChange={(val: any) => setData('cate', val)}
-                placeholder="Chọn danh mục..."
-              />
-            </div>
-
-            <div className="mb-4 relative">
-              <SearchableSelect2 
-                label="Bộ sưu tập"
-                value={data.collection}
-                options={optionCollections}
-                onChange={(val: any) => setData('collection', val)}
-                placeholder="Chọn bộ sưu tập..."
-              />
-            </div>
-
-            {/* Trạng thái */}
-            <div className="mb-4">
-              <FormSwitch 
-                label="Hiển thị Kiểu Nail"
-                description="Hiển thị biểu tượng 🔥"
-                enabled={data.status}
-                onChange={(val: number) => setData('status', val)}
-              />
-            </div>
-
-            {/* Trạng thái */}
-            <div className="mb-4">
-              <FormSwitch 
-                label="Sử dụng AI để tách móng"
-                description=""
-                enabled={processAi}
-                onChange={(val: number) => setProcessAi(val)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-primary">Thay đổi ảnh nguồn (Nếu cần)</label>
-              <input type="file" accept="image/*" onChange={onFileChange} className="w-full text-xs" />
-            </div>
+        {/* Floating Tool Group */}
+        <div className="flex items-center gap-8 bg-slate-50 dark:bg-dark-3 px-6 py-1.5 rounded-full border border-stroke">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">Zoom</span>
+            <button onClick={() => setScale(s => s - 0.1)} className="w-8 h-8 rounded-full hover:bg-white shadow-sm">-</button>
+            <span className="text-xs font-mono w-10 text-center">{Math.round(scale * 100)}%</span>
+            <button onClick={() => setScale(s => s + 0.1)} className="w-8 h-8 rounded-full hover:bg-white shadow-sm">+</button>
+          </div>
+          <div className="flex items-center gap-3 border-l pl-8">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">Xoay</span>
+            <button onClick={() => setRotate(r => r - 5)} className="w-8 h-8 rounded-full hover:bg-white shadow-sm">↺</button>
+            <span className="text-xs font-mono w-10 text-center">{rotate}°</span>
+            <button onClick={() => setRotate(r => r + 5)} className="w-8 h-8 rounded-full hover:bg-white shadow-sm">↻</button>
           </div>
         </div>
 
-        {/* Main: Vùng xử lý Crop */}
-        <div className="lg:col-span-8">
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-stroke dark:bg-dark-2 text-center">
-              {/* <div className="relative inline-block overflow-hidden rounded-lg bg-black/5 p-2 mb-4 w-full" style={{ minHeight: '400px' }}> */}
-              {/* <div className="relative w-full h-[600px]"> */}
-              
-              {imgSrc ? 
-                isCrop ? (
-                  <div className="relative inline-block overflow-hidden rounded-lg bg-black/5 p-2 mb-4 w-full" style={{ minHeight: '400px' }}>
-                  <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
-                    <img 
-                      alt="Source" 
-                      src={getDisplayUrl(imgSrc)}
-                      crossOrigin="anonymous" // Cực kỳ quan trọng để canvas không bị lỗi
-                      onLoad={onImageLoad}
-                      style={{
-                        // Đảm bảo ảnh hiển thị đúng 800px chiều cao để khớp với Canvas
-                        height: '800px', 
-                        width: 'auto',   // Để chiều rộng tự co giãn theo tỉ lệ
-                        maxWidth: 'none', // Chặn CSS global bóp nhỏ ảnh
-                        transform: `scale(${scale}) rotate(${rotate}deg)`,
-                        transition: 'transform 0.1s' 
-                      }}
-                    />
-                  </ReactCrop>
-                  </div>
-                ) : (
-                  <div className="relative inline-block border" style={{ width: '600px', height: '800px' }}>
-                  <canvas
-                    ref={canvasRef}
-                    width={600}
-                    height={800}
-                    onClick={handleClick}
-                    className="absolute top-0 left-0 z-0"
-                  />
-                  <canvas
-                    ref={maskCanvasRef}
-                    width={600} // Phải set width/height attribute ở đây
-                    height={800}
-                    className="absolute top-0 left-0 z-10 pointer-events-none"
-                    style={{
-                      width: '100%', // Hoặc 600px tùy layout của bạn
-                      height: 'auto',
-                      objectFit: 'contain' // Đảm bảo khớp với cách hiển thị của canvas gốc
-                    }}
-                  />
-                  </div>
-                )
-                 : (
-                <div className="flex h-[400px] items-center justify-center text-gray-400 italic">
-                  Vui lòng chọn ảnh để bắt đầu tách móng
-                </div>
-              )}
-              <img
-                ref={imgRef}
-                src={getDisplayUrl(imgSrc)}
-                crossOrigin="anonymous"
-                style={{
-                  position: 'fixed',
-                  top: -10000,
-                  left: -10000,
-                  visibility: 'hidden'
-                }}
-              />
-              {/* </div> */}
-            
-            {/* Toolbar điều khiển nhanh */}
-            <div className="flex items-center justify-center gap-4 border-t pt-4">
-              {/* <button type="button" onClick={() => setRotate(r => (r + 90) % 360)} className="px-3 py-1 bg-gray-100 rounded text-xs dark:bg-dark-3">XOAY 90°</button> */}
-              <div className="flex items-center gap-2">
-                <FormSwitchBoolean 
-                  label="Crop"
-                  enabled={isCrop}
-                  onChange={toggleCropMode}
-                />
-              </div>
-              <div className="flex items-center gap-1 bg-gray-50 dark:bg-dark-3 p-1 rounded-lg">
-                <button
-                  type="button" 
-                  onClick={() => {
-                    const newRotate = rotate - 5;
-                    setRotate(newRotate);
-                    if (!isCrop) {
-                      drawImageFinal(newRotate);
-                    }
-                  }}
-                  className="w-10 h-8 flex items-center justify-center hover:bg-white rounded shadow-sm transition-all"
-                >
-                  -5°
-                </button>
-                <span className="text-xs font-mono font-bold w-12 text-center border-x px-2">
-                  {rotate}°
-                </span>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    const newRotate = rotate + 5;
-                    setRotate(newRotate);
-                    if (!isCrop) {
-                      drawImageFinal(newRotate);
-                    }
-                  }}
-                  className="w-10 h-8 flex items-center justify-center hover:bg-white rounded shadow-sm transition-all"
-                >
-                  +5°
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setScale(s => Math.max(s - 0.1, 0.5))} className="w-8 h-8 bg-gray-100 rounded dark:bg-dark-3">-</button>
-                <span className="text-xs font-bold uppercase">Zoom</span>
-                <button type="button" onClick={() => setScale(s => Math.min(s + 1.5, 3))} className="w-8 h-8 bg-gray-100 rounded dark:bg-dark-3">+</button>
-              </div>
-              <button type="button" onClick={() => _fReset()} className="px-3 py-1 bg-gray-100 rounded text-xs dark:bg-dark-3">RESET</button>
-            </div>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={_fReset} className="text-sm text-gray-500 hover:text-red-500 mr-4">Làm mới</button>
+          {/* <button onClick={handleSubmit} disabled={processing} className="bg-primary px-8 py-2.5 text-white font-bold rounded-lg shadow-lg hover:translate-y-[-1px] transition-all">
+            {processing ? 'ĐANG LƯU...' : 'LƯU HỆ THỐNG'}
+          </button> */}
+        </div>
+      </header>
 
-            <button 
-              type="submit" 
-              disabled={processing || (!imgSrc && !nail?.id)} 
-              className="mt-6 w-full bg-primary py-4 text-white font-bold rounded-md hover:bg-opacity-90 disabled:bg-gray-400"
-            >
-              {processing ? 'ĐANG LƯU HỆ THỐNG...' : 'XÁC NHẬN VÀ LƯU'}
+      <div className="flex flex-1 overflow-hidden">
+        {/* LEFT SIDEBAR: Info only */}
+        <aside className="w-80 bg-white dark:bg-dark-2 border-r border-stroke p-6 overflow-y-auto">
+          <div className="space-y-5">
+            <FormInput label="Tên kiểu Nail" value={data.name} onChange={e => setData('name', e.target.value)} />
+            <SearchableSelect2 label="Danh mục" value={data.cate} options={optionCates} onChange={val => setData('cate', val)} />
+            <SearchableSelect2 label="Bộ sưu tập" value={data.collection} options={optionCollections} onChange={val => setData('collection', val)} />
+            <FormSwitch label="Hiển thị trên App" enabled={data.status} onChange={val => setData('status', val)} />
+            <FormSwitch label="Tự động tách móng (AI)" enabled={processAi} onChange={setProcessAi} />
+            <div className="pt-4 border-t">
+              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Thay đổi ảnh gốc</label>
+              <input type="file" accept="image/*" onChange={onFileChange} className="text-xs w-full" />
+            </div>
+          </div><br/ >
+
+          <div className="flex space-y-5 items-center gap-3">
+            <button onClick={handleSubmit} disabled={processing} className="bg-primary px-8 py-2.5 text-white font-bold rounded-lg shadow-lg hover:translate-y-[-1px] transition-all">
+              {processing ? 'ĐANG LƯU...' : 'LƯU HỆ THỐNG'}
             </button>
           </div>
-        </div>
-      </form>
+        </aside>
+
+        {/* MAIN WORKSPACE: Large Area */}
+        <main className="flex-1 overflow-auto p-12 flex items-start justify-center bg-[#f8fafc]">
+          <div className="shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white leading-[0] relative">
+            {imgSrc ? (
+              isCrop ? (
+                <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
+                  <img
+                    ref={imgRef} // Gán ref trực tiếp vào đây
+                    alt="Source" 
+                    src={getDisplayUrl(imgSrc)}
+                    crossOrigin="anonymous"
+                    onLoad={onImageLoad}
+                    style={{
+                      height: '800px', 
+                      width: 'auto',
+                      maxWidth: 'none',
+                      display: 'block', // Đảm bảo không có khoảng trống inline
+                      transform: `scale(${scale}) rotate(${rotate}deg)`,
+                      transition: 'transform 0.1s' 
+                    }}
+                  />
+                </ReactCrop>
+              ) : (
+                <div className="relative border-[10px] border-white cursor-crosshair">
+                  <canvas ref={canvasRef} width={800} height={1000} className="z-0" />
+                  <canvas ref={maskCanvasRef} width={800} height={1000} className="absolute top-0 left-0 z-10 pointer-events-none" />
+                </div>
+              )
+            ) : (
+              <div className="w-[600px] h-[800px] flex items-center justify-center text-gray-400 italic bg-white">
+                Vui lòng chọn ảnh để bắt đầu
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
     </>
   )
 }

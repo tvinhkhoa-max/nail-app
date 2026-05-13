@@ -23,7 +23,7 @@ export default class NailCollectionsController {
     const nailcollections = await NailCollection
       .query()
       .join('nail_cates', 'nail_collections.cate', '=', 'nail_cates.id')
-      .orderBy('nail_collections.updated_at', 'desc')
+      .orderBy('nail_collections.created_at', 'desc')
       .select('nail_collections.*', 'nail_cates.name as cate_name')
       .exec();
 

@@ -33,12 +33,14 @@ export default class NailsController {
         .leftJoin('nail_collections', 'nail_nails.collection', '=', 'nail_collections.id')
         .where('collection', collectionId)
         .select('nail_nails.*', 'nail_cates.name as cate_name', 'nail_collections.name as collection_name')
+        .orderBy('nail_nails.created_at', 'desc')
     else
       nails = await Nail
         .query()
         .leftJoin('nail_cates', 'nail_nails.cate', '=', 'nail_cates.id')
         .leftJoin('nail_collections', 'nail_nails.collection', '=', 'nail_collections.id')
         .select('nail_nails.*', 'nail_cates.name as cate_name', 'nail_collections.name as collection_name')
+        .orderBy('nail_nails.created_at', 'desc')
 
     nails.map(item => ({
       ...item,
@@ -219,7 +221,7 @@ async store({ request, response, session }: HttpContext) {
         await trx.commit()
 
         if (!process.env?.APP_ENV || process.env?.APP_ENV != 'development') {
-          removeImageStorage(nail.img);
+          if (nail.img) removeImageStorage(nail.img);
         } else {
           if (fileSystem.existsSync(imgPath))
             fs.unlink(imgPath);

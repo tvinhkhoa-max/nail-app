@@ -17,12 +17,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* 2. Sidebar Container */}
-      <Sidebar children={<></>} />
+      <Sidebar isCollapsed={!sidebarOpen} children={<></>} />
 
       {/* 3. Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Header tối ưu cho Mobile */}
         <header className="sticky top-0 z-30 flex items-center justify-between w-full px-4 py-3 bg-white dark:bg-dark-2 border-b border-stroke dark:border-dark-3">
+          {/* Toggle Button: Nút này sẽ đóng/mở sidebar */}
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="flex items-center justify-center w-10 h-10 border rounded-md border-stroke text-dark dark:text-white hover:bg-gray-100"
+          >
+            {sidebarOpen ? '❮' : '❯'}
+          </button>
           {/* Hamburger Button */}
           <button 
             onClick={() => setSidebarOpen(true)}
