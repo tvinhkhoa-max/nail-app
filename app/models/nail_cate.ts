@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, computed, beforeCreate } from '@adonisjs/lucid/orm'
+import { BaseModel, column, computed, beforeCreate, beforeUpdate } from '@adonisjs/lucid/orm'
 import { changeStatus } from '#helpers/index'
 import { v4 as uuid } from 'uuid'
 import slugify from 'slugify';
@@ -58,5 +58,14 @@ export default class NailCate extends BaseModel {
         locale: 'vi'      // Hỗ trợ tiếng Việt
       });
     }
+  }
+
+  @beforeUpdate()
+  public static assignBeforeUpdate(item: NailCate) {
+    item.tag = slugify(item.name.toLowerCase().replace(/\s+/g, '-'), {
+      lower: true,      // Chuyển thành chữ thường
+      strict: true,     // Loại bỏ các ký tự đặc biệt
+      // locale: 'vi'      // Hỗ trợ tiếng Việt
+    });
   }
 }

@@ -10,6 +10,7 @@ import { validate as uuidValidate } from 'uuid';
 import sharp from 'sharp';
 import db from '@adonisjs/lucid/services/db'
 import { inject } from '@adonisjs/core'
+import { changeStatus } from '#helpers/index'
 
 @inject()
 export default class NailCollectionsController {
@@ -18,25 +19,32 @@ export default class NailCollectionsController {
   //   protected collectionModel: typeof NailCollection,
   // ) {}
 
-  async index({ inertia }: HttpContext) {
-
-    const nailcollections = await NailCollection
+  async index({ request, inertia }: HttpContext) {
+    const page = request.input('page', 1)
+    const limit = 10 // Số lượng bản ghi mỗi trang
+    const paginateResult = await NailCollection
       .query()
       .join('nail_cates', 'nail_collections.cate', '=', 'nail_cates.id')
       .orderBy('nail_collections.created_at', 'desc')
-      .select('nail_collections.*', 'nail_cates.name as cate_name')
-      .exec();
+      .select('nail_collections.*', 'nail_cates.name as cate_name', 'nail_collections.status as status_text')
+      .paginate(page, limit);
+      // .exec();
 
-    nailcollections.map(item => ({
-      ...item,
-      cate_name: item.$extras.cate_name,
-    }))
+    // Bước 1: Cập nhật lại giá trị của field muốn thay đổi
+    paginateResult.all().forEach((item) => {
+      item.status_text = changeStatus(item.status as number) || 'Unknown'
+    })
 
+    // Bước 2: Chuyển toàn bộ kết quả phân trang về Object JSON chuẩn
+    const serializedData = paginateResult.toJSON();
     const config = {
       URL_STATIC_UPLOAD: (process.env?.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
     }
 
-    return inertia.render('nail-collections/index', { nailCollections: nailcollections, config })
+    return inertia.render('nail-collections/index', {
+      nailCollections: serializedData,
+      config
+    })
   }
 
   /**

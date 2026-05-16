@@ -7,6 +7,7 @@ import slugify from 'slugify';
 export default class NailCollection extends BaseModel {
   public static selfAssignPrimaryKey = true
   public static table = 'nail_collections'
+  public static computed = ['statusText']
 
   @column({ isPrimary: true })
   declare id: String
@@ -44,13 +45,18 @@ export default class NailCollection extends BaseModel {
   @column()
   declare status: Number
 
+  @column()
+  declare status_text: string
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-  @computed()
+  @computed({
+    serializeAs: 'statusText' // <-- ĐỊNH NGHĨA TÊN TRƯỜNG KHI XUẤT RA JSON
+  })
   public get statusText() {
     return changeStatus(this.status as number) || 'Unknown'
   }

@@ -35,7 +35,7 @@ export default function Sidebar({ isCollapsed, children }: { isCollapsed: boolea
               <SidebarItem href="/admin/staff" label="Nhân viên" icon="👥" isCollapsed={isCollapsed} />
               <SidebarItem href="/admin/nails/cates" label="Loại Nail" icon="📁" active={url.startsWith('/admin/nails/cates')} isCollapsed={isCollapsed} />
               <SidebarItem href="/admin/nails/collections" label="Bộ sưu tập" active={url.startsWith('/admin/nails/collections')} icon="🖼️" isCollapsed={isCollapsed} />
-              <SidebarItem href="/admin/nails" label="Kiểu Nail" icon="🎨" isCollapsed={isCollapsed} />
+              <SidebarItem href="/admin/nails" label="Kiểu Nail" icon="🎨" active={url.valueOf() == '/admin/nails' || url.startsWith('/admin/nails/create') || url.startsWith('/admin/nails/edit') } isCollapsed={isCollapsed} />
               <SidebarItem href="/admin/news" label="Bản tin" icon="📰" active={url.startsWith('/admin/news')} isCollapsed={isCollapsed} />
             </ul>
           </nav>

@@ -2,9 +2,10 @@ import React from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { FaEdit, FaEraser } from "react-icons/fa";
 import Layout from '#resource/layouts/Layout';
-import { route } from '#resource/helpers/route'
+import { route } from '#resource/helpers/route';
+import { PaginatedData, Pagination } from '#resource/components/ui/Pagination';
 
-interface Nails {
+interface Nail {
   id: string
   name: string
   img: string
@@ -16,7 +17,17 @@ interface Nails {
   statusText: string
 }
 
-export default function NailIndex({ nails, config }: { nails: Nails[], config: any }) {
+export default function NailIndex({
+  nails, config
+}: {
+  // nails: Nail[],
+  nails: PaginatedData<Nail> | Nail[],
+  config: any
+}) {
+    // Chuẩn hóa dữ liệu để code phía dưới chạy không bị lỗi dữ liệu
+  const isPaginated = !Array.isArray(nails);
+  const nailList = isPaginated ? (nails as PaginatedData<Nail>).data : (nails as Nail[]);
+  const meta = isPaginated ? (nails as PaginatedData<Nail>).meta : null;
   const handleDelete = (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa bộ sưu tập này?')) {
       // TRUYỀN ID VÀO ĐÂY
@@ -61,8 +72,8 @@ export default function NailIndex({ nails, config }: { nails: Nails[], config: a
               </tr>
             </thead>
             <tbody className="divide-y divide-stroke dark:divide-dark-3">
-              {nails.length > 0 ? (
-                nails.map((item) => (
+              {nailList.length > 0 ? (
+                nailList.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
                     <td className="py-4 px-4 text-body-color dark:text-dark-6">
                       <article className="flex items-center whitespace-nowrap">
@@ -109,6 +120,11 @@ export default function NailIndex({ nails, config }: { nails: Nails[], config: a
             </tbody>
           </table>
         </div>
+
+        {/* PHẦN PHÂN TRANG (PAGINATION PANEL) */}
+        {isPaginated && meta && meta.lastPage > 1 && (
+          <Pagination meta={meta} />
+        )}
       </div>
     </>
   )

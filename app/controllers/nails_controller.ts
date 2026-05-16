@@ -12,6 +12,7 @@ import { uploadImage, removeImageStorage } from '#services/supabase'
 import axios from 'axios'
 import FormData from 'form-data'
 
+import { changeStatus } from '#helpers/index'
 import NailCate from '#models/nail_cate'
 import NailCollection from '#models/nail_collection'
 import Nail from '#models/nail'
@@ -24,35 +25,38 @@ export default class NailsController {
    */
   async index({ inertia, request }: HttpContext) {
     const collectionId = request.input('collection', null)
-    let nails: Nail[] = []
+    const page = request.input('page', 1)
+    const limit = 10 // Số lượng bản ghi mỗi trang
+    let paginateResult: any;
 
     if (collectionId)
-      nails = await Nail
+      paginateResult = await Nail
         .query()
         .leftJoin('nail_cates', 'nail_nails.cate', '=', 'nail_cates.id')
         .leftJoin('nail_collections', 'nail_nails.collection', '=', 'nail_collections.id')
         .where('collection', collectionId)
         .select('nail_nails.*', 'nail_cates.name as cate_name', 'nail_collections.name as collection_name')
         .orderBy('nail_nails.created_at', 'desc')
+        .paginate(page, limit);
     else
-      nails = await Nail
+      paginateResult = await Nail
         .query()
         .leftJoin('nail_cates', 'nail_nails.cate', '=', 'nail_cates.id')
         .leftJoin('nail_collections', 'nail_nails.collection', '=', 'nail_collections.id')
         .select('nail_nails.*', 'nail_cates.name as cate_name', 'nail_collections.name as collection_name')
         .orderBy('nail_nails.created_at', 'desc')
+        .paginate(page, limit);
 
-    nails.map(item => ({
-      ...item,
-      cate_name: item.$extras.cate_name,
-      collection_name: item.$extras.collection_name
-    }))
 
+    paginateResult.all().forEach((item: any) => {
+      item.status_text = changeStatus(item.status as number) || 'Unknown'
+    })
+    const serializedData = paginateResult.toJSON();
     const config = {
       URL_STATIC_UPLOAD: (process.env?.APP_ENV != 'development' ? process.env.SUPABASE_URL_STATIC_UPLOAD : process.env.LOCAL_URL_STATIC_UPLOAD),
     }
 
-    return inertia.render('nails/index', { nails, config })
+    return inertia.render('nails/index', { nails: serializedData, config })
   }
 
   /**
@@ -94,81 +98,82 @@ export default class NailsController {
     return inertia.render('nails/manage', { nailCates: nailCates, nailCollections, collection, nail, pathUpload: getPathImageUpload() })
   }
 
-async store({ request, response, session }: HttpContext) {
-  // 1. Lấy các tham số điều hướng từ Client
-  const { id, process_mode, use_ai, polygon_data, ...payload } = request.all()
-  const _payload = request.only(['id', 'name', 'cate', 'collection', 'status']);
-  const trx = await db.transaction();
-  // console.log('All Files:', request.allFiles());
-  // console.log(process_mode);
-  // return {};
+  async store({ request, response, session }: HttpContext) {
+    // 1. Lấy các tham số điều hướng từ Client
+    const { id, process_mode, use_ai, polygon_data, ...payload } = request.all()
+    const _payload = request.only(['id', 'name', 'cate', 'collection', 'status']);
+    const trx = await db.transaction();
+    // console.log('All Files:', request.allFiles());
+    // console.log(process_mode);
+    // return {};
 
-  try {
-    const nailFile = request.file('nail_image')
-    let finalBuffer: Buffer | null = null
-    let pathImageUpload: string = '';
+    try {
+      const nailFile = request.file('nail_image')
+      let finalBuffer: Buffer | null = null
+      let pathImageUpload: string = '';
 
 
-    // CHỈ XỬ LÝ NẾU CÓ FILE GỬI LÊN (CROP hoặc POLYGON)
-    if (nailFile) {
-      const sourceBuffer = await fs.readFile(nailFile.tmpPath!)
+      // CHỈ XỬ LÝ NẾU CÓ FILE GỬI LÊN (CROP hoặc POLYGON)
+      if (nailFile) {
+        const sourceBuffer = await fs.readFile(nailFile.tmpPath!)
 
-      if (process_mode === 'polygon') {
+        if (process_mode === 'polygon') {
+          console.log(nailFile);
+          // Nhánh Polygon: Gửi Buffer ảnh (đã xoay sẵn từ Client) + tọa độ sang Python
+          const points = JSON.parse(polygon_data);
+          console.log(points);
+          finalBuffer = await extractNailByPolygon(sourceBuffer, points)
+        }  else if (process_mode === 'crop') {
 
-        // Nhánh Polygon: Gửi Buffer ảnh (đã xoay sẵn từ Client) + tọa độ sang Python
-        const points = JSON.parse(polygon_data);
-        finalBuffer = await extractNailByPolygon(sourceBuffer, points)
-      }  else if (process_mode === 'crop') {
-
-        // Nhánh Crop hoặc None: File gửi lên đã là kết quả cuối hoặc ảnh gốc
-        finalBuffer = sourceBuffer
-        if (finalBuffer) {
-          if (JSON.parse(use_ai)) {
-            finalBuffer = await extractNailAll(finalBuffer) // AI tách móng + nền
-          } else {
-            finalBuffer = await removeBg(finalBuffer) // Chỉ xóa nền
+          // Nhánh Crop hoặc None: File gửi lên đã là kết quả cuối hoặc ảnh gốc
+          finalBuffer = sourceBuffer
+          if (finalBuffer) {
+            if (JSON.parse(use_ai)) {
+              finalBuffer = await extractNailAll(finalBuffer) // AI tách móng + nền
+            } else {
+              finalBuffer = await removeBg(finalBuffer) // Chỉ xóa nền
+            }
           }
+
         }
-
       }
-    }
 
-    // 3. Lưu file vào ổ cứng/CDN
-    if (finalBuffer) {
-      const nailNameSlug = slugify(_payload.name || 'nail', { lower: true })
-      const fileName = `nail-${nailNameSlug}-${cuid()}.webp`
+      // 3. Lưu file vào ổ cứng/CDN
+      if (finalBuffer) {
+        const nailNameSlug = slugify(_payload.name || 'nail', { lower: true })
+        const fileName = `nail-${nailNameSlug}-${cuid()}.webp`
 
-      if (process.env.APP_ENV === 'production') {
-        const uploadInfo = await uploadImage(finalBuffer, 'nails', 'webp')
-        pathImageUpload = uploadInfo.path
-      } else {
-        pathImageUpload = `public/images/nails/${fileName}`
-        await fs.writeFile(`./${pathImageUpload}`, finalBuffer)
+        if (process.env.APP_ENV === 'production') {
+          const uploadInfo = await uploadImage(finalBuffer, 'nails', 'webp')
+          pathImageUpload = uploadInfo.path
+        } else {
+          pathImageUpload = `public/images/nails/${fileName}`
+          await fs.writeFile(`./${pathImageUpload}`, finalBuffer)
+        }
       }
+
+      // 4. Cập nhật Database
+      const dbData = { 
+        ..._payload,
+        ...(pathImageUpload && { img: pathImageUpload }) // Chỉ update field img nếu có ảnh mới
+      }
+
+      if (_payload['id'])
+        await Nail.updateOrCreate({ id: id }, dbData, { client: trx })
+      else
+        await Nail.create(dbData, { client: trx })
+
+      await trx.commit()
+      session.flash('success', 'Đã lưu dữ liệu móng thành công!')
+      return response.redirect().back()
+
+    } catch (error) {
+      await trx.rollback()
+      console.error('Lỗi Server:', error)
+      session.flash('error', 'Hệ thống gặp lỗi khi xử lý ảnh.')
+      return response.redirect().back()
     }
-
-    // 4. Cập nhật Database
-    const dbData = { 
-      ..._payload,
-      ...(pathImageUpload && { img: pathImageUpload }) // Chỉ update field img nếu có ảnh mới
-    }
-
-    if (_payload['id'])
-      await Nail.updateOrCreate({ id: id }, dbData, { client: trx })
-    else
-      await Nail.create(dbData, { client: trx })
-
-    await trx.commit()
-    session.flash('success', 'Đã lưu dữ liệu móng thành công!')
-    return response.redirect().back()
-
-  } catch (error) {
-    await trx.rollback()
-    console.error('Lỗi Server:', error)
-    session.flash('error', 'Hệ thống gặp lỗi khi xử lý ảnh.')
-    return response.redirect().back()
   }
-}
 
   /**
    * Xử lý lưu dữ liệu (Store)

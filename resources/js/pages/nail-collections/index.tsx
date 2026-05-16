@@ -4,6 +4,7 @@ import { FaEdit, FaEraser, FaCheck } from "react-icons/fa";
 import { RiQuillPenAiLine } from "react-icons/ri";
 import Layout from '#resource/layouts/Layout';
 import { route } from '#resource/helpers/route';
+import { PaginatedData, Pagination } from '#resource/components/ui/Pagination';
 
 interface NailCollection {
   id: string
@@ -18,7 +19,18 @@ interface NailCollection {
   statusText: string
 }
 
-export default function NailCollectionIndex({ nailCollections, config }: { nailCollections: NailCollection[], config: any | null }) {
+export default function NailCollectionIndex({
+  nailCollections,
+  config
+}: { 
+  // nailCollections: NailCollection[],
+  nailCollections: PaginatedData<NailCollection> | NailCollection[],
+  config: any | null 
+}) {
+  // Chuẩn hóa dữ liệu để code phía dưới chạy không bị lỗi dữ liệu
+  const isPaginated = !Array.isArray(nailCollections);
+  const collectionsList = isPaginated ? (nailCollections as PaginatedData<NailCollection>).data : (nailCollections as NailCollection[]);
+  const meta = isPaginated ? (nailCollections as PaginatedData<NailCollection>).meta : null;
   const handleDelete = (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa bộ sưu tập này?')) {
       // TRUYỀN ID VÀO ĐÂY
@@ -43,7 +55,7 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
         
         <Link
           href={route('admin.nail-collection.create')}
-          className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center text-base font-medium text-white hover:bg-opacity-90"
+          className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center text-base font-medium text-white hover:bg-opacity-90  cursor-pointer"
         >
           + Thêm bộ mới
         </Link>
@@ -67,8 +79,8 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
               </tr>
             </thead>
             <tbody className="divide-y divide-stroke dark:divide-dark-3">
-              {nailCollections.length > 0 ? (
-                nailCollections.map((item) => (
+              {collectionsList.length > 0 ? (
+                collectionsList.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
                     <td className="py-4 px-4">
                       <p className="font-medium text-dark dark:text-white">{item.name}</p>
@@ -94,7 +106,8 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
                     </td>
                     <td className="py-4 px-4 text-center">
                       <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${getStatusClass(item.status)}`}>
-                        {item.statusText.toUpperCase()}
+                        {item.statusText}
+                        {/* .toUpperCase() */}
                       </span>
                     </td>
                     <td className="py-4 px-4 justify-end text-right text-sm text-gray-500">
@@ -127,6 +140,11 @@ export default function NailCollectionIndex({ nailCollections, config }: { nailC
             </tbody>
           </table>
         </div>
+
+        {/* PHẦN PHÂN TRANG (PAGINATION PANEL) */}
+        {isPaginated && meta && meta.lastPage > 1 && (
+          <Pagination meta={meta} />
+        )}
       </div>
     </>
   )

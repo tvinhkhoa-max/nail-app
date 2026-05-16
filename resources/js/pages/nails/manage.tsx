@@ -431,16 +431,25 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
       ctx.translate(-centerX, -centerY)
       ctx.drawImage(
         image,
-        0,
-        0,
+        0, 0,
         image.naturalWidth,
         image.naturalHeight,
-        0,
-        0,
+        0, 0,
         image.naturalWidth,
         image.naturalHeight,
       )
 
+      ctx.restore();
+    } else if (processMode === 'polygon') {
+      // Logic Xoay nguyên tấm (Polygon)
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotate * Math.PI) / 180);
+      ctx.scale(scale, scale);
+      ctx.drawImage(image, -canvas.width / 2, -canvas.height / 2);
       ctx.restore();
     }
 
@@ -584,8 +593,32 @@ export default function ManageNailStyle({ nailCates, nailCollections, collection
                 </ReactCrop>
               ) : (
                 <div className="relative border-[10px] border-white cursor-crosshair">
-                  <canvas ref={canvasRef} width={800} height={1000} className="z-0" />
-                  <canvas ref={maskCanvasRef} width={800} height={1000} className="absolute top-0 left-0 z-10 pointer-events-none" />
+                  <canvas
+                    ref={canvasRef}
+                    width={800}
+                    height={1000}
+                    className="z-0"
+                    onClick={handleClick}
+                  />
+                  <canvas ref={maskCanvasRef} width={800} height={1000}
+                    className="absolute top-0 left-0 z-10 pointer-events-none"
+                    style={{
+                      width: '100%', // Hoặc 600px tùy layout của bạn
+                      height: 'auto',
+                      objectFit: 'contain' // Đảm bảo khớp với cách hiển thị của canvas gốc
+                    }}
+                  />
+                  <img
+                    ref={imgRef}
+                    src={getDisplayUrl(imgSrc)}
+                    crossOrigin="anonymous"
+                    style={{
+                      position: 'fixed',
+                      top: -10000,
+                      left: -10000,
+                      visibility: 'hidden'
+                    }}
+                  />
                 </div>
               )
             ) : (
